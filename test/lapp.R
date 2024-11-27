@@ -2,7 +2,12 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 
-df <- readRDS("df.rds")  # Load your dataset
+
+
+# Define the UI
+library(shiny)
+library(ggplot2)
+library(dplyr)
 
 # Define the UI
 ui <- navbarPage(
@@ -12,6 +17,10 @@ ui <- navbarPage(
   tabPanel("Plot Builder",
            sidebarLayout(
              sidebarPanel(
+               # Add the file input control here
+               fileInput("datafile", "Upload Data File",
+                         accept = c(".csv", ".rds", ".sav")),
+               
                # Select plot type
                radioButtons(
                  "plotType",
@@ -21,16 +30,16 @@ ui <- navbarPage(
                ),
                
                # Variable selection inputs
-               selectInput("xVar", "X Variable:", choices = names(df)),
-               selectInput("yVar", "Y Variable:", choices = names(df)),
-               selectInput("fillVar", "Fill Variable (optional):", choices = c("None", names(df)), selected = "None"),
-               selectInput("facetVar", "Facet Wrap Variable (optional):", choices = c("None", names(df)), selected = "None"),
+               selectInput("xVar", "X Variable:", choices = NULL),
+               selectInput("yVar", "Y Variable:", choices = NULL),
+               selectInput("fillVar", "Fill Variable (optional):", choices = c("None"), selected = "None"),
+               selectInput("facetVar", "Facet Wrap Variable (optional):", choices = c("None"), selected = "None"),
                
                # Data wrangling options for bar plot
                conditionalPanel(
                  condition = "input.plotType == 'bar'",
                  selectInput("operation", "Operation on Y Variable:",
-                           choices = c("Mean" = "mean", "Proportion" = "prop")),
+                             choices = c("Mean" = "mean", "Proportion" = "prop")),
                  textOutput("operationInfo"),
                  
                  # Conditional panel for factor variables
@@ -67,24 +76,55 @@ ui <- navbarPage(
 
 # Define the server logic
 server <- function(input, output, session) {
+  # Load the 'foreign' package for reading .sav files
+  library(foreign)
+  
+  # Reactive expression to read the uploaded data
+  dataInput <- reactive({
+    req(input$datafile)
+    ext <- tools::file_ext(input$datafile$name)
+    switch(ext,
+           csv = read.csv(input$datafile$datapath),
+           rds = readRDS(input$datafile$datapath),
+           sav = read.spss(input$datafile$datapath, to.data.frame = TRUE),
+           {
+             showNotification("Invalid file; Please upload a .csv, .rds, or .sav file", type = "error")
+             validate("Invalid file; Please upload a .csv, .rds, or .sav file")
+           }
+    )
+  })
+  
+  # Observe when dataInput() changes and update selectInput choices
+  observeEvent(dataInput(), {
+    df <- dataInput()
+    # Update variable selection inputs
+    updateSelectInput(session, "xVar", choices = names(df))
+    updateSelectInput(session, "yVar", choices = names(df))
+    updateSelectInput(session, "fillVar", choices = c("None", names(df)), selected = "None")
+    updateSelectInput(session, "facetVar", choices = c("None", names(df)), selected = "None")
+  })
   
   # Reactive value to track if selected Y variable is a factor
   is_factor <- reactive({
     req(input$yVar)
+    df <- dataInput()
+    req(df)
     is.factor(df[[input$yVar]])
   })
   
   # Dynamic UI for factor handling
   output$factorUI <- renderUI({
     req(input$yVar)
+    df <- dataInput()
+    req(df)
     if(is_factor()) {
       levels_without_na <- levels(df[[input$yVar]])
       levels_without_na <- levels_without_na[!is.na(levels_without_na)]
       
       tagList(
         radioButtons("factorHandling", "How to handle factor variable:",
-                    choices = c("Binarize" = "binary",
-                              "Scale Numerically" = "scale")),
+                     choices = c("Binarize" = "binary",
+                                 "Scale Numerically" = "scale")),
         
         # UI elements for binarization
         conditionalPanel(
@@ -139,9 +179,9 @@ server <- function(input, output, session) {
   
   # Create a reactive expression for the plot and its code
   plot_and_code <- reactive({
+    req(dataInput())
+    df <- dataInput()
     req(input$xVar, input$yVar)
-    
-    # Step 1: Prepare data
     data_to_use <- df
     
     # Step 2: Handle factor Y variable
@@ -334,6 +374,7 @@ server <- function(input, output, session) {
     plot_and_code()$code
   })
 }
+
 
 # Run the app
 shinyApp(ui = ui, server = server)
