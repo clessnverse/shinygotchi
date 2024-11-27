@@ -88,24 +88,18 @@ server <- function(input, output, session) {
         # UI elements for numerical scaling
         conditionalPanel(
           condition = "input.factorHandling == 'scale'",
-          selectizeInput(
-            "zeroLevel",
-            "Select level for 0:",
-            choices = levels_without_na
-          ),
-          selectizeInput(
-            "oneLevel",
-            "Select level for 1:",
-            choices = levels_without_na
-          ),
-          radioButtons(
-            "middleHandling",
-            "How to handle middle values:",
-            choices = c(
-              "Equal spacing" = "equal",
-              "Closer to 0" = "zero_weighted",
-              "Closer to 1" = "one_weighted"
-            )
+          tagList(
+            lapply(seq_along(levels_without_na), function(i) {
+              level <- levels_without_na[i]
+              n_choices <- length(levels_without_na)
+              values <- seq(0, 1, length.out = n_choices)
+              selectInput(
+                inputId = paste0("scale_", i),
+                label = paste("Select value for", level, ":"),
+                choices = values,
+                selected = values[i]
+              )
+            })
           )
         )
       )
@@ -113,39 +107,10 @@ server <- function(input, output, session) {
   })
   
   # Function to create numerical scaling for factors
-  create_numerical_scale <- function(factor_values, zero_level, one_level, middle_handling) {
-    levels_without_na <- levels(factor_values)
-    levels_without_na <- levels_without_na[!is.na(levels_without_na)]
-    n_levels <- length(levels_without_na)
-    
-    # Create sequence based on middle handling preference
-    middle_values <- switch(middle_handling,
-                          "equal" = seq(0, 1, length.out = n_levels),
-                          "zero_weighted" = {
-                            x <- seq(0, 1, length.out = n_levels)
-                            x^2  # Weight towards zero
-                          },
-                          "one_weighted" = {
-                            x <- seq(0, 1, length.out = n_levels)
-                            sqrt(x)  # Weight towards one
-                          })
-    
-    # Create named vector for mapping
-    zero_idx <- which(levels_without_na == zero_level)
-    one_idx <- which(levels_without_na == one_level)
-    
-    # Reorder values to ensure 0 and 1 are in correct positions
-    values <- middle_values
-    values[zero_idx] <- 0
-    values[one_idx] <- 1
-    
-    # Create mapping
-    mapping <- setNames(values, levels_without_na)
-    
+  create_numerical_scale <- function(factor_values, value_mapping) {
     # Convert factor to numeric using mapping
-    numeric_values <- mapping[as.character(factor_values)]
+    numeric_values <- value_mapping[as.character(factor_values)]
     numeric_values[is.na(factor_values)] <- NA
-    
     return(numeric_values)
   }
   
@@ -181,14 +146,21 @@ server <- function(input, output, session) {
               )
             )
         } else if (input$factorHandling == "scale") {
-          req(input$zeroLevel, input$oneLevel, input$middleHandling)
+          # Get levels without NA
+          levels_without_na <- levels(df[[input$yVar]])
+          levels_without_na <- levels_without_na[!is.na(levels_without_na)]
+          
+          # Create mapping from factor levels to numeric values
+          value_mapping <- sapply(seq_along(levels_without_na), function(i) {
+            as.numeric(input[[paste0("scale_", i)]])
+          })
+          names(value_mapping) <- levels_without_na
+          
           data_to_use <- data_to_use %>%
             mutate(
               processed_y = create_numerical_scale(
                 .data[[input$yVar]], 
-                input$zeroLevel,
-                input$oneLevel,
-                input$middleHandling
+                value_mapping
               )
             )
         }
