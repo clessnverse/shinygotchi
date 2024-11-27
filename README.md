@@ -1,19 +1,34 @@
 Liste des fonctionalités:
 
-- [ ] Charger des données 
+- [x] Charger des données 
     - [ ] .sav
     - [ ] .csv
     - [ ] .rds
 
-- [ ] sélection des variables
+- [x] sélection des variables
 
 - [ ] wrangling des variables
+    - [ ] Réorganiser les variables en X
+    - [ ] Mettre le scale en pourcentage 
+    - [ ] Utiliser weighted mean au lieu de mean()
 
 - [ ] visualisation des données
     - [ ] barplot
-        - [ ] fill
-        - [ ] coord_flip
-    - [ ] histogram
+        - [x] fill
+        - [x] coord_flip
     - [ ] scatterplot
     - [ ] map
-    - [ ] theme datagotchi
+    - [x] theme datagotchi
+    - [ ] Mettre que si le user a pas clessnize::datagotchi_theme_light(), utilise theme_minimal()
+    - [ ] Ajouter le pourcentage sur le top des barplots
+    
+- [ ] Peaufiner le graphique
+    - [ ] Ajouter des labels
+    - [ ] Ajouter les couleurs des fills
+        - [ ] couleurs des partis
+        - [ ] Palettes de couleurs random
+    - [ ] Changer le titre des labels
+    - [ ] Ajuster la légende
+    - [ ] Ajouter un caption
+        - [ ] Ajouter le n = 
+
