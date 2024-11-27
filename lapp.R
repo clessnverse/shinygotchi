@@ -30,11 +30,11 @@ ui <- navbarPage(
                conditionalPanel(
                  condition = "input.plotType == 'bar'",
                  selectInput("operation", "Operation on Y Variable:",
-                             choices = c("Mean" = "mean", "Proportion" = "prop")),
+                           choices = c("Mean" = "mean", "Proportion" = "prop")),
                  textOutput("operationInfo"),
                  
-                 # Conditional panel to binarize factor variables
-                 uiOutput("binarizeUI")
+                 # Conditional panel for factor variables
+                 uiOutput("factorUI")
                )
              ),
              
@@ -56,6 +56,99 @@ ui <- navbarPage(
 # Define the server logic
 server <- function(input, output, session) {
   
+  # Reactive value to track if selected Y variable is a factor
+  is_factor <- reactive({
+    req(input$yVar)
+    is.factor(df[[input$yVar]])
+  })
+  
+  # Dynamic UI for factor handling
+  output$factorUI <- renderUI({
+    req(input$yVar)
+    if(is_factor()) {
+      levels_without_na <- levels(df[[input$yVar]])
+      levels_without_na <- levels_without_na[!is.na(levels_without_na)]
+      
+      tagList(
+        radioButtons("factorHandling", "How to handle factor variable:",
+                    choices = c("Binarize" = "binary",
+                              "Scale Numerically" = "scale")),
+        
+        # UI elements for binarization
+        conditionalPanel(
+          condition = "input.factorHandling == 'binary'",
+          selectizeInput(
+            "levelsSelected",
+            "Select levels to consider as '1':",
+            choices = levels_without_na,
+            multiple = TRUE
+          )
+        ),
+        
+        # UI elements for numerical scaling
+        conditionalPanel(
+          condition = "input.factorHandling == 'scale'",
+          selectizeInput(
+            "zeroLevel",
+            "Select level for 0:",
+            choices = levels_without_na
+          ),
+          selectizeInput(
+            "oneLevel",
+            "Select level for 1:",
+            choices = levels_without_na
+          ),
+          radioButtons(
+            "middleHandling",
+            "How to handle middle values:",
+            choices = c(
+              "Equal spacing" = "equal",
+              "Closer to 0" = "zero_weighted",
+              "Closer to 1" = "one_weighted"
+            )
+          )
+        )
+      )
+    }
+  })
+  
+  # Function to create numerical scaling for factors
+  create_numerical_scale <- function(factor_values, zero_level, one_level, middle_handling) {
+    levels_without_na <- levels(factor_values)
+    levels_without_na <- levels_without_na[!is.na(levels_without_na)]
+    n_levels <- length(levels_without_na)
+    
+    # Create sequence based on middle handling preference
+    middle_values <- switch(middle_handling,
+                          "equal" = seq(0, 1, length.out = n_levels),
+                          "zero_weighted" = {
+                            x <- seq(0, 1, length.out = n_levels)
+                            x^2  # Weight towards zero
+                          },
+                          "one_weighted" = {
+                            x <- seq(0, 1, length.out = n_levels)
+                            sqrt(x)  # Weight towards one
+                          })
+    
+    # Create named vector for mapping
+    zero_idx <- which(levels_without_na == zero_level)
+    one_idx <- which(levels_without_na == one_level)
+    
+    # Reorder values to ensure 0 and 1 are in correct positions
+    values <- middle_values
+    values[zero_idx] <- 0
+    values[one_idx] <- 1
+    
+    # Create mapping
+    mapping <- setNames(values, levels_without_na)
+    
+    # Convert factor to numeric using mapping
+    numeric_values <- mapping[as.character(factor_values)]
+    numeric_values[is.na(factor_values)] <- NA
+    
+    return(numeric_values)
+  }
+  
   # Dynamically display information about the selected operation
   output$operationInfo <- renderText({
     if (input$operation == "mean") {
@@ -67,18 +160,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Dynamically generate UI for binarizing factor variables
-  output$binarizeUI <- renderUI({
-    if (is.factor(df[[input$yVar]])) {
-      selectizeInput(
-        "levelsSelected",
-        paste("Select levels of", input$yVar, "to consider as '1':"),
-        choices = levels(df[[input$yVar]]),
-        multiple = TRUE
-      )
-    }
-  })
-  
   # Render the main plot
   output$mainPlot <- renderPlot({
     req(input$xVar, input$yVar)  # Ensure variables are selected
@@ -86,18 +167,35 @@ server <- function(input, output, session) {
     # Step 1: Prepare data
     data_to_use <- df  # Start with the original data
     
-    # Step 2: Handle binarization of factor Y variable
-    if (input$plotType == "bar" && is.factor(df[[input$yVar]])) {
-      req(input$levelsSelected)  # Ensure levels are selected for binarization
-      data_to_use <- data_to_use %>%
-        mutate(
-          binarized_y = if_else(
-            df[[input$yVar]] %in% input$levelsSelected,
-            1, 0,
-            missing = 0  # Default missing values to 0
-          )
-        )
-      y_var_for_calculation <- "binarized_y"
+    # Step 2: Handle factor Y variable
+    if (input$plotType == "bar" && is_factor()) {
+      if (!is.null(input$factorHandling)) {  # Check if factorHandling exists
+        if (input$factorHandling == "binary") {
+          req(input$levelsSelected)  # Ensure levels are selected for binarization
+          data_to_use <- data_to_use %>%
+            mutate(
+              processed_y = if_else(
+                .data[[input$yVar]] %in% input$levelsSelected,
+                1, 0,
+                missing = NA  # Set missing values to NA
+              )
+            )
+        } else if (input$factorHandling == "scale") {
+          req(input$zeroLevel, input$oneLevel, input$middleHandling)
+          data_to_use <- data_to_use %>%
+            mutate(
+              processed_y = create_numerical_scale(
+                .data[[input$yVar]], 
+                input$zeroLevel,
+                input$oneLevel,
+                input$middleHandling
+              )
+            )
+        }
+        y_var_for_calculation <- "processed_y"
+      } else {
+        y_var_for_calculation <- input$yVar
+      }
     } else {
       y_var_for_calculation <- input$yVar
     }
@@ -113,8 +211,12 @@ server <- function(input, output, session) {
         group_vars <- append(group_vars, sym(input$facetVar))
       }
       
-      # Summarize data
+      # Remove NA values and summarize data
       wrangled_data <- data_to_use %>%
+        filter(!is.na(.data[[input$xVar]])) %>%  # Remove NAs from x variable
+        filter(!is.na(.data[[y_var_for_calculation]])) %>%  # Remove NAs from y variable
+        {if (input$fillVar != "None") filter(., !is.na(.data[[input$fillVar]])) else .} %>%  # Remove NAs from fill variable if present
+        {if (input$facetVar != "None") filter(., !is.na(.data[[input$facetVar]])) else .} %>%  # Remove NAs from facet variable if present
         group_by(!!!group_vars) %>%
         summarise(
           wrangled_y = if (input$operation == "mean") {
@@ -166,7 +268,7 @@ server <- function(input, output, session) {
       }
     }
     
-    # Step 5: Print the plot
+    # Print the plot
     print(p)
   })
 }
