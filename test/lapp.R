@@ -9,7 +9,7 @@ ui <- navbarPage(
   "Datagotchi Data Explorer",
   
   # First tab: Plot Selector
-  tabPanel("Plots",
+  tabPanel("Plot Builder",
            sidebarLayout(
              sidebarPanel(
                # Select plot type
