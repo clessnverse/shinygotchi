@@ -35,11 +35,23 @@ ui <- navbarPage(
                  
                  # Conditional panel for factor variables
                  uiOutput("factorUI")
-               )
+               ),
+               
+               # Add show code checkbox
+               checkboxInput("showCode", "Show ggplot code", value = FALSE)
              ),
              
              mainPanel(
-               plotOutput("mainPlot")  # Render the main plot
+               plotOutput("mainPlot"),
+               # Add verbatim text output for the code
+               conditionalPanel(
+                 condition = "input.showCode == true",
+                 tags$div(
+                   style = "background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 20px;",
+                   tags$p("R code to reproduce this plot:"),
+                   verbatimTextOutput("plotCode")
+                 )
+               )
              )
            )
   ),
@@ -125,37 +137,61 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render the main plot
-  output$mainPlot <- renderPlot({
-    req(input$xVar, input$yVar)  # Ensure variables are selected
+  # Create a reactive expression for the plot and its code
+  plot_and_code <- reactive({
+    req(input$xVar, input$yVar)
     
     # Step 1: Prepare data
-    data_to_use <- df  # Start with the original data
+    data_to_use <- df
     
     # Step 2: Handle factor Y variable
     if (input$plotType == "bar" && is_factor()) {
-      if (!is.null(input$factorHandling)) {  # Check if factorHandling exists
+      if (!is.null(input$factorHandling)) {
         if (input$factorHandling == "binary") {
-          req(input$levelsSelected)  # Ensure levels are selected for binarization
+          req(input$levelsSelected)
+          
+          # Create the data transformation code
+          data_transform_code <- sprintf(
+            'data_to_use <- data_to_use %%>%%\n  mutate(processed_y = if_else(%s %%in%% c("%s"), 1, 0, missing = NA))',
+            input$yVar,
+            paste(input$levelsSelected, collapse = '", "')
+          )
+          
+          # Execute the transformation
           data_to_use <- data_to_use %>%
             mutate(
               processed_y = if_else(
                 .data[[input$yVar]] %in% input$levelsSelected,
                 1, 0,
-                missing = NA  # Set missing values to NA
+                missing = NA
               )
             )
+          
+          y_var_for_calculation <- "processed_y"
         } else if (input$factorHandling == "scale") {
-          # Get levels without NA
+          # Get levels and mapping for numerical scaling
           levels_without_na <- levels(df[[input$yVar]])
           levels_without_na <- levels_without_na[!is.na(levels_without_na)]
           
-          # Create mapping from factor levels to numeric values
           value_mapping <- sapply(seq_along(levels_without_na), function(i) {
             as.numeric(input[[paste0("scale_", i)]])
           })
           names(value_mapping) <- levels_without_na
           
+          # Create the data transformation code
+          mapping_code <- paste(
+            sprintf('c("%s" = %s', names(value_mapping), value_mapping),
+            collapse = ", "
+          )
+          mapping_code <- paste0(mapping_code, ")")
+          
+          data_transform_code <- sprintf(
+            'value_mapping <- %s\ndata_to_use <- data_to_use %%>%%\n  mutate(processed_y = value_mapping[as.character(%s)])',
+            mapping_code,
+            input$yVar
+          )
+          
+          # Execute the transformation
           data_to_use <- data_to_use %>%
             mutate(
               processed_y = create_numerical_scale(
@@ -163,43 +199,55 @@ server <- function(input, output, session) {
                 value_mapping
               )
             )
+          
+          y_var_for_calculation <- "processed_y"
         }
-        y_var_for_calculation <- "processed_y"
       } else {
         y_var_for_calculation <- input$yVar
+        data_transform_code <- NULL
       }
     } else {
       y_var_for_calculation <- input$yVar
+      data_transform_code <- NULL
     }
     
-    # Step 3: Wrangle data if Bar Plot is selected
     if (input$plotType == "bar") {
       # Prepare grouping variables
       group_vars <- list(sym(input$xVar))
       if (input$fillVar != "None") {
         group_vars <- append(group_vars, sym(input$fillVar))
       }
-      if (input$facetVar != "None") {
-        group_vars <- append(group_vars, sym(input$facetVar))
+      
+      # Create grouping variables string for code
+      group_vars_code <- input$xVar
+      if (input$fillVar != "None") {
+        group_vars_code <- paste(group_vars_code, input$fillVar, sep = ", ")
       }
       
-      # Remove NA values and summarize data
-      wrangled_data <- data_to_use %>%
-        filter(!is.na(.data[[input$xVar]])) %>%  # Remove NAs from x variable
-        filter(!is.na(.data[[y_var_for_calculation]])) %>%  # Remove NAs from y variable
-        {if (input$fillVar != "None") filter(., !is.na(.data[[input$fillVar]])) else .} %>%  # Remove NAs from fill variable if present
-        {if (input$facetVar != "None") filter(., !is.na(.data[[input$facetVar]])) else .} %>%  # Remove NAs from facet variable if present
-        group_by(!!!group_vars) %>%
-        summarise(
-          wrangled_y = if (input$operation == "mean") {
-            mean(.data[[y_var_for_calculation]], na.rm = TRUE)
-          } else if (input$operation == "prop") {
-            sum(.data[[y_var_for_calculation]], na.rm = TRUE) / n()
-          },
-          .groups = "drop"  # Avoid nested grouping
-        )
+      # Data wrangling code and execution
+      wrangle_code <- sprintf(
+        'wrangled_data <- data_to_use %%>%%\n  filter(!is.na(%s)) %%>%%\n  filter(!is.na(%s))',
+        input$xVar, y_var_for_calculation
+      )
       
-      # Create bar plot with explicit position dodge
+      if (input$fillVar != "None") {
+        wrangle_code <- paste0(wrangle_code, sprintf(' %%>%%\n  filter(!is.na(%s))', input$fillVar))
+      }
+      
+      wrangle_code <- paste0(
+        wrangle_code,
+        sprintf(
+          ' %%>%%\n  group_by(%s) %%>%%\n  summarise(wrangled_y = %s(%s, na.rm = TRUE), .groups = "drop")',
+          group_vars_code,
+          if(input$operation == "mean") "mean" else "function(x) sum(x, na.rm = TRUE) / n()",
+          y_var_for_calculation
+        )
+      )
+      
+      # Execute the wrangling
+      wrangled_data <- eval(parse(text = wrangle_code))
+      
+      # Create plot and code
       p <- ggplot(wrangled_data) +
         aes(x = .data[[input$xVar]], 
             y = wrangled_y,
@@ -215,17 +263,35 @@ server <- function(input, output, session) {
              y = if (input$operation == "mean") paste("Mean", input$yVar) else paste("Proportion", input$yVar),
              fill = input$fillVar)
       
-      # Add faceting if selected
+      plot_code <- sprintf(
+        'ggplot(wrangled_data) +\n  aes(x = %s, y = wrangled_y%s) +\n  geom_bar(stat = "identity", position = position_dodge(preserve = "single", width = 0.9), width = 0.8) +\n  theme_minimal() +\n  labs(x = "%s", y = "%s"%s)',
+        input$xVar,
+        if(input$fillVar != "None") sprintf(', fill = %s, group = %s', input$fillVar, input$fillVar) else "",
+        input$xVar,
+        if(input$operation == "mean") paste("Mean", input$yVar) else paste("Proportion", input$yVar),
+        if(input$fillVar != "None") sprintf(', fill = "%s"', input$fillVar) else ""
+      )
+      
       if (input$facetVar != "None") {
         p <- p + facet_wrap(vars(.data[[input$facetVar]]))
+        plot_code <- paste0(plot_code, sprintf(' +\n  facet_wrap(~%s)', input$facetVar))
       }
       
     } else if (input$plotType == "scatter") {
-      # Create scatter plot
+      # Create scatter plot and code
       p <- ggplot(data_to_use, aes(x = .data[[input$xVar]], y = .data[[input$yVar]])) +
         geom_point()
       
-      # Add color aesthetic if fill variable is selected
+      plot_code <- sprintf(
+        'ggplot(data_to_use, aes(x = %s, y = %s%s)) +\n  geom_point() +\n  theme_minimal() +\n  labs(x = "%s", y = "%s"%s)',
+        input$xVar,
+        input$yVar,
+        if(input$fillVar != "None") sprintf(', color = %s', input$fillVar) else "",
+        input$xVar,
+        input$yVar,
+        if(input$fillVar != "None") sprintf(', color = "%s"', input$fillVar) else ""
+      )
+      
       if (input$fillVar != "None") {
         p <- p + aes(color = .data[[input$fillVar]]) +
           labs(color = input$fillVar)
@@ -234,14 +300,38 @@ server <- function(input, output, session) {
       p <- p + theme_minimal() +
         labs(x = input$xVar, y = input$yVar)
       
-      # Add faceting if selected
       if (input$facetVar != "None") {
         p <- p + facet_wrap(vars(.data[[input$facetVar]]))
+        plot_code <- paste0(plot_code, sprintf(' +\n  facet_wrap(~%s)', input$facetVar))
       }
     }
     
-    # Print the plot
-    print(p)
+    # Combine all code pieces
+    full_code <- c(
+      "# Load required libraries",
+      "library(dplyr)",
+      "library(ggplot2)",
+      "",
+      if(!is.null(data_transform_code)) c("# Transform data", data_transform_code, ""),
+      if(input$plotType == "bar") c("# Wrangle data", wrangle_code, ""),
+      "# Create plot",
+      plot_code
+    )
+    
+    list(
+      plot = p,
+      code = paste(full_code, collapse = "\n")
+    )
+  })
+  
+  # Render the plot
+  output$mainPlot <- renderPlot({
+    plot_and_code()$plot
+  })
+  
+  # Render the code
+  output$plotCode <- renderText({
+    plot_and_code()$code
   })
 }
 
