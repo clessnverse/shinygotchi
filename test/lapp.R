@@ -1,8 +1,3 @@
-library(shiny)
-library(ggplot2)
-library(dplyr)
-
-
 
 # Define the UI
 library(shiny)
@@ -74,11 +69,15 @@ ui <- navbarPage(
   )
 )
 
+
 # Define the server logic
 server <- function(input, output, session) {
-  # Load the 'foreign' package for reading .sav files
+  # Load necessary packages
   library(foreign)
-  
+  library(png)
+  library(grid)
+  library(cowplot)
+
   # Reactive expression to read the uploaded data
   dataInput <- reactive({
     req(input$datafile)
@@ -93,7 +92,7 @@ server <- function(input, output, session) {
            }
     )
   })
-  
+
   # Observe when dataInput() changes and update selectInput choices
   observeEvent(dataInput(), {
     df <- dataInput()
@@ -103,7 +102,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "fillVar", choices = c("None", names(df)), selected = "None")
     updateSelectInput(session, "facetVar", choices = c("None", names(df)), selected = "None")
   })
-  
+
   # Reactive value to track if selected Y variable is a factor
   is_factor <- reactive({
     req(input$yVar)
@@ -111,7 +110,7 @@ server <- function(input, output, session) {
     req(df)
     is.factor(df[[input$yVar]])
   })
-  
+
   # Dynamic UI for factor handling
   output$factorUI <- renderUI({
     req(input$yVar)
@@ -157,7 +156,7 @@ server <- function(input, output, session) {
       )
     }
   })
-  
+
   # Function to create numerical scaling for factors
   create_numerical_scale <- function(factor_values, value_mapping) {
     # Convert factor to numeric using mapping
@@ -165,7 +164,7 @@ server <- function(input, output, session) {
     numeric_values[is.na(factor_values)] <- NA
     return(numeric_values)
   }
-  
+
   # Dynamically display information about the selected operation
   output$operationInfo <- renderText({
     if (input$operation == "mean") {
@@ -176,7 +175,7 @@ server <- function(input, output, session) {
       ""
     }
   })
-  
+
   # Create a reactive expression for the plot and its code
   plot_and_code <- reactive({
     req(dataInput())
@@ -345,30 +344,56 @@ server <- function(input, output, session) {
         plot_code <- paste0(plot_code, sprintf(' +\n  facet_wrap(~%s)', input$facetVar))
       }
     }
-    
+
+    # Charger le logo
+    logo_img <- readPNG("www/Logo.PNG")  # Assurez-vous que le chemin est correct
+
+    # Convertir le logo en objet graphique
+    logo_grob <- rasterGrob(
+      logo_img,
+      x = unit(1, "npc") - unit(0.05, "npc"),  # Position sur l'axe x
+      y = unit(0.05, "npc"),                    # Position sur l'axe y
+      just = c("right", "bottom"),              # Justification du logo
+      width = unit(0.2, "npc")                  # Ajustez la taille du logo si nécessaire
+    )
+
+    # Ajouter le logo au graphique
+    p <- p + annotation_custom(logo_grob)
+
+    # (Optionnel) Ajuster les marges du graphique si nécessaire
+    p <- p + theme(plot.margin = unit(c(1, 1, 1, 1), "lines"))
+
     # Combine all code pieces
     full_code <- c(
       "# Load required libraries",
       "library(dplyr)",
       "library(ggplot2)",
+      "library(png)",
+      "library(grid)",
+      "library(cowplot)",
       "",
       if(!is.null(data_transform_code)) c("# Transform data", data_transform_code, ""),
       if(input$plotType == "bar") c("# Wrangle data", wrangle_code, ""),
       "# Create plot",
-      plot_code
+      plot_code,
+      "",
+      "# Add logo to the plot",
+      'logo_img <- readPNG("www/Logo.PNG")',
+      'logo_grob <- rasterGrob(logo_img, x = unit(1, "npc") - unit(0.05, "npc"), y = unit(0.05, "npc"), just = c("right", "bottom"), width = unit(0.2, "npc"))',
+      'p <- p + annotation_custom(logo_grob)'
     )
-    
+
     list(
       plot = p,
       code = paste(full_code, collapse = "\n")
     )
   })
-  
+
   # Render the plot
   output$mainPlot <- renderPlot({
     plot_and_code()$plot
   })
-  
+
   # Render the code
   output$plotCode <- renderText({
     plot_and_code()$code
@@ -376,5 +401,8 @@ server <- function(input, output, session) {
 }
 
 
+
 # Run the app
 shinyApp(ui = ui, server = server)
+
+
