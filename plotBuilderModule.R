@@ -5,11 +5,14 @@ library(ggplot2)
 library(dplyr)
 
 # Module UI
-plotBuilderUI <- function(id, df) {
+plotBuilderUI <- function(id) {
   ns <- NS(id)
   
   sidebarLayout(
     sidebarPanel(
+      # Correctement namespacer le fileInput
+      fileInput(ns("datafile"), "Upload Data File",
+                accept = c(".csv", ".rds", ".sav")),
       # Select plot type
       radioButtons(
         ns("plotType"),
@@ -63,22 +66,60 @@ plotBuilderUI <- function(id, df) {
 }
 
 # Module Server
-plotBuilderServer <- function(id, df) {
+plotBuilderServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # Load necessary packages
+  library(foreign)
+  library(png)
+  library(grid)
+  library(cowplot)
+
+ # Reactive expression to read the uploaded data
+ dataInput <- reactive({
+  req(input$datafile)
+  ext <- tools::file_ext(input$datafile$name)
+  df <- switch(ext,
+         csv = read.csv(input$datafile$datapath),
+         rds = readRDS(input$datafile$datapath),
+         sav = read.spss(input$datafile$datapath, to.data.frame = TRUE),
+         {
+           showNotification("Invalid file; Please upload a .csv, .rds, or .sav file", type = "error")
+           validate("Invalid file; Please upload a .csv, .rds, or .sav file")
+         }
+  )
+  # Convert character columns to factors for consistency
+  df <- df %>% mutate(across(where(is.character), as.factor))
+  return(df)
+})
+
+  # Observe when dataInput() changes and update selectInput choices
+  observeEvent(dataInput(), {
+    df <- dataInput()
+    # Update variable selection inputs
+    updateSelectInput(session, "xVar", choices = names(df))
+    updateSelectInput(session, "yVar", choices = names(df))
+    updateSelectInput(session, "fillVar", choices = c("None", names(df)), selected = "None")
+    updateSelectInput(session, "facetVar", choices = c("None", names(df)), selected = "None")
+  })
+
     # Reactive value to track if selected Y variable is a factor
-    is_factor <- reactive({
-      req(input$yVar)
-      is.factor(df[[input$yVar]])
-    })
+  is_factor <- reactive({
+    req(input$yVar)
+    df <- dataInput()
+    req(df)
+    is.factor(df[[input$yVar]])
+  })
     
-    # Dynamic UI for factor handling
-    output$factorUI <- renderUI({
-      req(input$yVar)
-      if(is_factor()) {
-        levels_without_na <- levels(df[[input$yVar]])
-        levels_without_na <- levels_without_na[!is.na(levels_without_na)]
+   # Dynamic UI for factor handling
+  output$factorUI <- renderUI({
+    req(input$yVar)
+    df <- dataInput()
+    req(df)
+    if(is_factor()) {
+      levels_without_na <- levels(df[[input$yVar]])
+      levels_without_na <- levels_without_na[!is.na(levels_without_na)]
         
         tagList(
           radioButtons(ns("factorHandling"), "How to handle factor variable:",
@@ -137,8 +178,10 @@ plotBuilderServer <- function(id, df) {
     })
     
     # Create a reactive expression for the plot and its code
-    plot_and_code <- reactive({
-      req(input$xVar, input$yVar)
+  plot_and_code <- reactive({
+    req(dataInput())
+    df <- dataInput()
+    req(input$xVar, input$yVar)
       
       # Step 1: Prepare data
       data_to_use <- df

@@ -1,10 +1,6 @@
-# app.R
-
 library(shiny)
 library(ggplot2)
 library(dplyr)
-
-df <- readRDS("df.rds")  # Load your dataset
 
 # Source the module
 source("plotBuilderModule.R")
@@ -15,7 +11,7 @@ ui <- navbarPage(
   
   # First tab: Plot Builder
   tabPanel("Plot Builder",
-           plotBuilderUI("plot_builder", df)
+           plotBuilderUI("plot_builder")
   ),
   
   # Second tab: Display Geyser Gif
@@ -29,7 +25,7 @@ ui <- navbarPage(
 
 # Define the server logic
 server <- function(input, output, session) {
-  plotBuilderServer("plot_builder", df)
+  plotBuilderServer("plot_builder")
 }
 
 # Run the app
