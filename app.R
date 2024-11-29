@@ -1,14 +1,9 @@
-# app.R
 library(shiny)
 library(ggplot2)
 library(dplyr)
 
-# Source all helper functions
-source("R/utils/theme_utils.R")
-
-# Source module files
-source("R/modules/plot_builder/ui.R")
-source("R/modules/plot_builder/server.R")
+# Source the module
+source("R/modules/plot_builder/plotBuilderModule.R")
 
 # Define the UI
 ui <- navbarPage(
@@ -23,8 +18,7 @@ ui <- navbarPage(
   tabPanel("Geyser Gif",
            div(
              img(src = "https://upload.wikimedia.org/wikipedia/commons/7/7a/Old_Faithful_Geyser_at_Yellowstone_National_Park.gif",
-                 alt = "Old Faithful Geyser", 
-                 style = "max-width:100%; height:auto;")
+                 alt = "Old Faithful Geyser", style = "max-width:100%; height:auto;")
            )
   )
 )
