@@ -293,7 +293,7 @@ plotBuilderServer <- function(id) {
         p <- ggplot(wrangled_data) +
           aes(x = .data[[input$xVar]], 
               y = wrangled_y,
-              fill = if (input$fillVar != "None") .data[[input$fillVar]] else NULL,
+              fill = if (input$fillVar != "None") as.factor(.data[[input$fillVar]]) else NULL,
               group = if (input$fillVar != "None") .data[[input$fillVar]] else NULL) +
           geom_bar(
             stat = "identity",
