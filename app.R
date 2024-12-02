@@ -9,13 +9,13 @@ source("R/modules/groups/groupsModule.R")
 # Define the UI
 ui <- navbarPage(
   "Datagotchi Data Explorer",
-    
-  tabPanel("Issues",
-  ),
+   
   tabPanel("Groups",
     socialGroupsUI("social_explorer"),
+  ), 
+  tabPanel("Issues",
   ),
-  tabPanel("Lifestyles",
+    tabPanel("Lifestyles",
   ),
   tabPanel("Parties",
   ),

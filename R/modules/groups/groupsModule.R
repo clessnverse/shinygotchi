@@ -6,16 +6,16 @@ socialGroupsUI <- function(id) {
         selectInput(ns("social_var"), "Select Social Group Variable:",
           choices = c(
             "Age Groups" = "ses_age_group",
-            "Gender" = "ses_female",
-            "Geographic Location" = "ses_state",
-            "Language" = "ses_language_english",
-            "Socioeconomic Status" = "ses_income_large_groups",
-            "Education" = "ses_education",
+            "Gender" = "ses_gender_factor",
+            "Geographic Location" = "ses_province",
+            "Language" = "ses_language",
+            "Socioeconomic Status" = "ses_income",
+            "Education" = "ses_education_group",
             "Ethnicity" = "ses_ethnicity",
-            "Religious Affiliation" = "ses_religiosity_importance",
-            "Sexual Orientation" = "ses_sexual_orientation_heterosexual",
-            "Housing Status" = "ses_ownership",
-            "Religious Groups" = "ses_religion_factor"
+            "Religious Affiliation" = "ses_religiosity",
+            "Housing Status" = "ses_owner",
+            "Religious Groups" = "ses_religion",
+            "Sexual Orientation" = "ses_orientation_factor"
           )
         )
     ),
@@ -32,42 +32,27 @@ socialGroupsServer <- function(id, data) {
     
     lifestyle_vars <- list(
       # Activities
-      "Yoga" = "lifestyle_yoga_freq_factor",
-      "Fishing" = "lifestyle_fishing_freq_factor",
-      "Hunting" = "lifestyle_hunting_freq_factor",
-      "Non-motorized Activities" = "lifestyle_nonmotorized_freq_factor",
-      "Motorized Activities" = "lifestyle_motorized_freq_factor",
-      "Social Volunteering" = "lifestyle_volunteeringsoc_freq_factor",
-      "Video Gaming" = "lifestyle_videogame_freq_factor",
-      # Transportation
-      "Transport Type" = "lifestyle_transport",
-      "Vehicle Preference" = "lifestyle_prius_pickup",
-      # Food & Drink
-      "Meat Consumption" = "lifestyle_meat_consumption_freq_factor",
-      "Coffee Habits" = "lifestyle_coffee",
-      "Meal Preferences" = "lifestyle_classic_meal",
-      "Alcohol Preference" = "lifestyle_alcohol_favorite_grouped",
-      # Entertainment
-      "Barbie/Oppenheimer" = "lifestyle_movie_barbenheimer",
-      "Baseball Watching" = "lifestyle_freq_watch_baseball",
-      "Soccer Watching" = "lifestyle_freq_watch_soccer",
-      # Other
-      "Clothing Style" = "lifestyle_clothing_style_grouped",
-      "Gun Ownership" = "lifestyle_guns_number_factor"
+      "Vote choice" = "dv_vote_choice", # Barplot x = social_var, y = summarise(n = n() / nrow(data)), fill = dv_vote_choice. Ne pas oublier de mettre les couleurs officielles. LO
+      "Left vs Right" = "dv_attitude_leftvsright", # Dotplot avec coordflip
+      "Turnout" = "dv_turnout", # dotplot avec coordflip
+      "Hunting" = "lifestyle_hunting_freq_numeric", # barplot
+      "Manual Tasks" = "lifestyle_manual_tasks_freq_numeric", # barplot avec art
+      "Art" = "lifestyle_performing_arts_freq_numeric", # barplot avec manual
+      "Transport" = "lifestyle_choice_transport_clean", # Même que vote choice 
     )
 
     social_vars <- list(
       "Age Groups" = "ses_age_group",
-      "Gender" = "ses_female",
-      "Geographic Location" = "ses_state",
-      "Language" = "ses_language_english",
-      "Socioeconomic Status" = "ses_income_large_groups",
-      "Education" = "ses_education",
+      "Gender" = "ses_gender_factor",
+      "Geographic Location" = "ses_region",
+      "Language" = "ses_language",
+      "Socioeconomic Status" = "ses_income",
+      "Education" = "ses_education_group",
       "Ethnicity" = "ses_ethnicity",
-      "Religious Affiliation" = "ses_religiosity_importance",
-      "Sexual Orientation" = "ses_sexual_orientation_heterosexual",
-      "Housing Status" = "ses_ownership",
-      "Religious Groups" = "ses_religion_factor"
+      "Religious Affiliation" = "ses_religiosity",
+      "Housing Status" = "ses_owner",
+      "Religious Groups" = "ses_religion",
+      "Sexual Orientation" = "ses_orientation_factor"
     )
     
     create_plot <- function(social_var, lifestyle_var, plot_type) {
