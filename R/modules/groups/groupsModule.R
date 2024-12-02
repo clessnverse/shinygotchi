@@ -208,5 +208,4 @@ socialGroupsServer <- function(id, data) {
       print(p_left_right)
     })
   }) 
-  })
 }
