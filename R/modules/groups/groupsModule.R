@@ -207,6 +207,10 @@ socialGroupsServer <- function(id, data) {
       cat("Left vs Right plot created successfully\n")
       print(p_left_right)
     })
+
+    output$plot <- renderPlot({
+
+    })
+
   }) 
-  })
 }
