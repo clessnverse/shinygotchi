@@ -35,6 +35,15 @@ socialGroupsServer <- function(id, data) {
     
     # Read data with error checking
     df_social_groups <- readRDS("data/df_canada.rds")
+
+    canadian_party_colors <- c(
+      "lpc" = "#d71920",
+      "cpc" = "#182c54",
+      "ndp" = "#F58220",
+      "bq" = "#00aeef",
+      "gpc" = "#3D9B35",
+      "other" = "#a6a6a6"
+    )
     
     lifestyle_vars <- list(
       "Vote choice" = "dv_vote_choice", # Barplot LO
@@ -66,6 +75,11 @@ socialGroupsServer <- function(id, data) {
     })
    
     output$plot_vote_choice <- renderPlot({
+
+      # Valid parties
+      valid_parties <- (names(canadian_party_colors))
+      df_social_groups$dv_vote_choice[!(df_social_groups$dv_vote_choice %in% valid_parties)] <- "other"
+
       # Calculate proportions with error handling
       data <- df_social_groups %>%
           filter(!is.na(!!sym(input$social_var)), !is.na(dv_vote_choice)) %>%
@@ -73,8 +87,7 @@ socialGroupsServer <- function(id, data) {
           summarise(count = n(), .groups = 'drop') %>%
           group_by(!!sym(input$social_var)) %>%
           mutate(proportion = count / sum(count)) %>%
-          ungroup() %>%
-          ifelse()
+          ungroup()
 
       # Create and print plot
       p <- ggplot(data = data, 
@@ -88,7 +101,8 @@ socialGroupsServer <- function(id, data) {
              x = "Social Group",
              y = "Proportion",
              fill = "Vote Choice") +
-        scale_y_continuous(labels = scales::percent)
+        scale_y_continuous(labels = scales::percent) +
+        scale_fill_manual(values = canadian_party_colors)
       
       print(p)
     })
@@ -141,6 +155,7 @@ socialGroupsServer <- function(id, data) {
       print(p_turnout)
     })
 
+<<<<<<< HEAD
     output$plot_left_vs_right <- renderPlot({
       # Validate input
       req(input$social_var)
@@ -194,4 +209,7 @@ socialGroupsServer <- function(id, data) {
       print(p_left_right)
     })
   }) 
+=======
+  })
+>>>>>>> 42464a3374b517f572ca0b37c1394ae4c1fc681f
 }
