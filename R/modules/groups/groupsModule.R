@@ -23,7 +23,8 @@ socialGroupsUI <- function(id) {
     
     mainPanel(
       plotOutput(ns("plot_vote_choice")),
-      plotOutput(ns("plot_turnout")) 
+      plotOutput(ns("plot_turnout")),
+      plotOutput(ns("plot_left_vs_right")) 
     )
   )
 }
@@ -140,6 +141,57 @@ socialGroupsServer <- function(id, data) {
       print(p_turnout)
     })
 
-    output$p
-  })
+    output$plot_left_vs_right <- renderPlot({
+      # Validate input
+      req(input$social_var)
+      req(df_social_groups)
+      
+      cat("Starting to create Left vs Right plot for:", input$social_var, "\n")
+      
+      # Vérifier que dv_attitude_leftvsright est disponible et numérique
+      if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
+        cat("Variable dv_attitude_leftvsright not found in data.\n")
+        return(NULL)
+      }
+      
+      if (!is.numeric(df_social_groups$dv_attitude_leftvsright)) {
+        cat("Variable dv_attitude_leftvsright is not numeric.\n")
+        return(NULL)
+      }
+      
+      # Calculer la moyenne de dv_attitude_leftvsright par groupe social
+      plot_data_left_right <- tryCatch({
+        data <- df_social_groups %>%
+          filter(!is.na(!!sym(input$social_var)), !is.na(dv_attitude_leftvsright)) %>%
+          group_by(!!sym(input$social_var)) %>%
+          summarise(
+            mean_left_right = mean(dv_attitude_leftvsright, na.rm = TRUE),
+            .groups = 'drop'
+          )
+        
+        cat("Left vs Right plot data created. Dimensions:", dim(data), "\n")
+        data
+      }, error = function(e) {
+        cat("Error creating Left vs Right plot data:", e$message, "\n")
+        NULL
+      })
+      
+      req(plot_data_left_right)
+      
+      # Créer le dot plot avec coord_flip
+      p_left_right <- ggplot(data = plot_data_left_right, 
+                             aes(x = reorder(!!sym(input$social_var), mean_left_right), 
+                                 y = mean_left_right)) +
+        geom_point(size = 3, color = "darkgreen") +
+        coord_flip() +
+        theme_minimal() +
+        labs(title = "Left vs Right by Social Group",
+             x = "Social Group",
+             y = "Mean Left-Right Attitude (0 = Left, 1 = Right)") +
+        scale_y_continuous(limits = c(0, 1))
+      
+      cat("Left vs Right plot created successfully\n")
+      print(p_left_right)
+    })
+  }) 
 }
