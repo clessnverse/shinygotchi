@@ -28,7 +28,9 @@ socialGroupsUI <- function(id) {
 
 socialGroupsServer <- function(id, data) {
   moduleServer(id, function(input, output, session) {
-    
+   
+    df_soial_groups <- readRDS("data/df_canada.rds")
+
     lifestyle_vars <- list(
       # Activities
       "Vote choice" = "dv_vote_choice", # Barplot x = social_var, y = summarise(n = n() / nrow(data)), fill = dv_vote_choice. Ne pas oublier de mettre les couleurs officielles. LO
