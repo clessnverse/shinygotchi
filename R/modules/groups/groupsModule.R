@@ -155,7 +155,6 @@ socialGroupsServer <- function(id, data) {
       print(p_turnout)
     })
 
-<<<<<<< HEAD
     output$plot_left_vs_right <- renderPlot({
       # Validate input
       req(input$social_var)
@@ -209,7 +208,5 @@ socialGroupsServer <- function(id, data) {
       print(p_left_right)
     })
   }) 
-=======
   })
->>>>>>> 42464a3374b517f572ca0b37c1394ae4c1fc681f
 }
