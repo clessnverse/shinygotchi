@@ -79,7 +79,8 @@ Typologie
     - Most important issue
     - On reste dans les SES
     - Idée: Antonoire de la causalité: SES -> Lifestyle -> Enjeux
-
+    - Les groupes:
+        - Jeunes, Vieux, Femmes, Hommes, Régions, Urbains, Ruraux, Francophones, Anglophones, Riches, Pauvres, Éduqués, Non-éduqués, Minorités visibles, Religieux, Non-religieux, Environnementalistes, Non-environnementalistes, Hetero/Queer, House owner/renter, Muslims, Catholics, protestants, Jews
 - Lifestyle/Idéologie
 
 - Leaders/Partis

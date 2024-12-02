@@ -13,6 +13,7 @@ ui <- navbarPage(
   tabPanel("Issues",
   ),
   tabPanel("Groups",
+    socialGroupsUI("social_explorer"),
   ),
   tabPanel("Lifestyles",
   ),
