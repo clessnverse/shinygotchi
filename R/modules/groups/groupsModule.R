@@ -24,7 +24,7 @@ socialGroupsUI <- function(id) {
     mainPanel(
       plotOutput(ns("plot_vote_choice")),
       plotOutput(ns("plot_turnout")),
-      plotOutput(ns("plot_hunting"))
+      plotOutput(ns("plot_hunting")),
       plotOutput(ns("plot_left_vs_right")),
       plotOutput(ns("plot_manual_vs_art"))  
     )
