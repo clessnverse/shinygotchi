@@ -4,6 +4,7 @@ library(dplyr)
 
 # Source the module
 source("R/modules/plot_builder/plotBuilderModule.R")
+source("R/modules/groups/groupsModule.R")
 
 # Define the UI
 ui <- navbarPage(
