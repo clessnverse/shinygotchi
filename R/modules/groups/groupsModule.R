@@ -15,7 +15,7 @@ socialGroupsUI <- function(id) {
             "Ethnicity" = "ses_ethnicity",
             "Religious Affiliation" = "ses_religiosity",
             "Housing Status" = "ses_owner",
-            "Religious Groups" = "ses_religion",
+            "Religious Groups" = "ses_religion_big_five",
             "Sexual Orientation" = "ses_orientation_factor"
           )
         )
@@ -25,6 +25,7 @@ socialGroupsUI <- function(id) {
       plotOutput(ns("plot_vote_choice")),
       plotOutput(ns("plot_turnout")),
       plotOutput(ns("plot_left_vs_right")) 
+      plotOutput(ns("plot_hunting"))
     )
   )
 }
@@ -65,7 +66,7 @@ socialGroupsServer <- function(id, data) {
       "Ethnicity" = "ses_ethnicity",
       "Religious Affiliation" = "ses_religiosity",
       "Housing Status" = "ses_owner",
-      "Religious Groups" = "ses_religion",
+      "Religious Groups" = "ses_religion_big_five",
       "Sexual Orientation" = "ses_orientation_factor"
     )
     
@@ -208,8 +209,12 @@ socialGroupsServer <- function(id, data) {
       print(p_left_right)
     })
 
-    output$plot <- renderPlot({
+    output$plot_hunting <- renderPlot({
+        df_hunting <- df_social_groups %>%
+          filter(!is.na(!!sym(input$social_var)), !is.na(lifestyle_hunting_freq_numeric))
 
+        ggplot(data = df_hunting, aes(x = !!sym(input$social_var), y = lifestyle_hunting_freq_numeric)) +
+          geom_bar(stat = "identity")
     })
 
   }) 
