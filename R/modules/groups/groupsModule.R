@@ -208,6 +208,7 @@ socialGroupsServer <- function(id, data) {
       cat("Left vs Right plot created successfully\n")
       print(p_left_right)
     })
+<<<<<<< HEAD
     output$plot_manual_vs_art <- renderPlot({
       # Validate input
       req(input$social_var)
@@ -270,5 +271,12 @@ socialGroupsServer <- function(id, data) {
       cat("Manual vs Art plot created successfully\n")
       print(p_manual_art)
     })
+=======
+
+    output$plot <- renderPlot({
+
+    })
+
+>>>>>>> ce2dd4f52837d755ac17c2ac7d6a01a14f70ce51
   }) 
 }
