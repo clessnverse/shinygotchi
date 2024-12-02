@@ -24,13 +24,9 @@ socialGroupsUI <- function(id) {
     mainPanel(
       plotOutput(ns("plot_vote_choice")),
       plotOutput(ns("plot_turnout")),
-<<<<<<< HEAD
-      plotOutput(ns("plot_left_vs_right")) 
       plotOutput(ns("plot_hunting"))
-=======
       plotOutput(ns("plot_left_vs_right")),
       plotOutput(ns("plot_manual_vs_art"))  
->>>>>>> 2609b9d1fe747e674e15dda8990c000905d16da4
     )
   )
 }
@@ -213,7 +209,7 @@ socialGroupsServer <- function(id, data) {
       cat("Left vs Right plot created successfully\n")
       print(p_left_right)
     })
-<<<<<<< HEAD
+    
     output$plot_manual_vs_art <- renderPlot({
       # Validate input
       req(input$social_var)
@@ -276,7 +272,6 @@ socialGroupsServer <- function(id, data) {
       cat("Manual vs Art plot created successfully\n")
       print(p_manual_art)
     })
-=======
 
     output$plot_hunting <- renderPlot({
         df_hunting <- df_social_groups %>%
@@ -286,6 +281,5 @@ socialGroupsServer <- function(id, data) {
           geom_bar(stat = "identity")
     })
 
->>>>>>> ce2dd4f52837d755ac17c2ac7d6a01a14f70ce51
   }) 
 }
