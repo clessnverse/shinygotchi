@@ -22,7 +22,8 @@ socialGroupsUI <- function(id) {
     ),
     
     mainPanel(
-      plotOutput(ns("plot_vote_choice")) 
+      plotOutput(ns("plot_vote_choice")),
+      plotOutput(ns("plot_turnout")) 
     )
   )
 }
@@ -119,6 +120,54 @@ socialGroupsServer <- function(id, data) {
       
       cat("Plot created successfully\n")
       print(p)
+    })
+     # Ajouter le renderPlot pour le taux de participation
+     output$plot_turnout <- renderPlot({
+      # Validate input
+      req(input$social_var)
+      req(df_social_groups)
+      
+      cat("Starting to create turnout plot for:", input$social_var, "\n")
+      
+      # Convertir dv_turnout en variable binaire si nécessaire
+      if (!"dv_turnout_binary" %in% names(df_social_groups)) {
+        df_social_groups <- df_social_groups %>%
+          mutate(dv_turnout_binary = ifelse(dv_turnout >= 0.5, "Yes", "No"))
+      }
+      
+      # Calculate turnout rate by social group
+      plot_data_turnout <- tryCatch({
+        data <- df_social_groups %>%
+          filter(!is.na(!!sym(input$social_var)), !is.na(dv_turnout_binary)) %>%
+          group_by(!!sym(input$social_var)) %>%
+          summarise(
+            turnout_rate = mean(dv_turnout_binary == "Yes", na.rm = TRUE),
+            .groups = 'drop'
+          )
+        
+        cat("Turnout plot data created. Dimensions:", dim(data), "\n")
+        data
+      }, error = function(e) {
+        cat("Error creating turnout plot data:", e$message, "\n")
+        NULL
+      })
+      
+      req(plot_data_turnout)
+      
+      # Create and print turnout dot plot
+      p_turnout <- ggplot(data = plot_data_turnout, 
+                          aes(x = reorder(!!sym(input$social_var), turnout_rate), 
+                              y = turnout_rate)) +
+        geom_point(size = 3, color = "blue") +
+        coord_flip() +
+        theme_minimal() +
+        labs(title = "Turnout by Social Group",
+             x = "Social Group",
+             y = "Turnout Rate") +
+        scale_y_continuous(labels = scales::percent)
+      
+      cat("Turnout plot created successfully\n")
+      print(p_turnout)
     })
   })
 }
