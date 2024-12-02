@@ -30,24 +30,9 @@ socialGroupsUI <- function(id) {
 # Server Module
 socialGroupsServer <- function(id, data) {
   moduleServer(id, function(input, output, session) {
-    # Debug print when module starts
-    cat("Module server initialized\n")
     
     # Read data with error checking
-    df_social_groups <- tryCatch({
-      data <- readRDS("data/df_canada.rds")
-      cat("Data loaded successfully. Dimensions:", dim(data), "\n")
-      data
-    }, error = function(e) {
-      cat("Error loading data:", e$message, "\n")
-      NULL
-    })
-    
-    # Print the first few rows and column names for debugging
-    cat("First few rows of data:\n")
-    print(head(df_social_groups))
-    cat("\nColumn names:\n")
-    print(names(df_social_groups))
+    df_social_groups <- readRDS("data/df_canada.rds")
     
     lifestyle_vars <- list(
       "Vote choice" = "dv_vote_choice",
@@ -79,32 +64,19 @@ socialGroupsServer <- function(id, data) {
     })
    
     output$plot_vote_choice <- renderPlot({
-      # Validate input
-      req(input$social_var)
-      req(df_social_groups)
-      
-      cat("Starting to create plot for:", input$social_var, "\n")
-      
       # Calculate proportions with error handling
-      plot_data <- tryCatch({
-        data <- df_social_groups %>%
+      data <- df_social_groups %>%
+          filter(!is.na(!!sym(input$social_var)), !is.na(dv_vote_choice)) %>%
           group_by(!!sym(input$social_var), dv_vote_choice) %>%
           summarise(count = n(), .groups = 'drop') %>%
           group_by(!!sym(input$social_var)) %>%
           mutate(proportion = count / sum(count)) %>%
+          drop_na() %>%
           ungroup()
-        
-        cat("Plot data created. Dimensions:", dim(data), "\n")
-        data
-      }, error = function(e) {
-        cat("Error creating plot data:", e$message, "\n")
-        NULL
-      })
-      
-      req(plot_data)
-      
+
+     
       # Create and print plot
-      p <- ggplot(data = plot_data, 
+      p <- ggplot(data = data, 
              aes(x = !!sym(input$social_var), 
                  y = proportion, 
                  fill = dv_vote_choice)) +
@@ -117,7 +89,6 @@ socialGroupsServer <- function(id, data) {
              fill = "Vote Choice") +
         scale_y_continuous(labels = scales::percent)
       
-      cat("Plot created successfully\n")
       print(p)
     })
   })
