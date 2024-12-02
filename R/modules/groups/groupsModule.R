@@ -33,12 +33,12 @@ socialGroupsServer <- function(id, data) {
     lifestyle_vars <- list(
       # Activities
       "Vote choice" = "dv_vote_choice", # Barplot x = social_var, y = summarise(n = n() / nrow(data)), fill = dv_vote_choice. Ne pas oublier de mettre les couleurs officielles. LO
-      "Left vs Right" = "dv_attitude_leftvsright", # Dotplot avec coordflip
-      "Turnout" = "dv_turnout", # dotplot avec coordflip
-      "Hunting" = "lifestyle_hunting_freq_numeric", # barplot
-      "Manual Tasks" = "lifestyle_manual_tasks_freq_numeric", # barplot avec art
-      "Art" = "lifestyle_performing_arts_freq_numeric", # barplot avec manual
-      "Transport" = "lifestyle_choice_transport_clean", # Même que vote choice 
+      "Left vs Right" = "dv_attitude_leftvsright", # Dotplot avec coordflip Etienne
+      "Turnout" = "dv_turnout", # dotplot avec coordflip Etienne
+      "Hunting" = "lifestyle_hunting_freq_numeric", # barplot LO
+      "Manual Tasks" = "lifestyle_manual_tasks_freq_numeric", # barplot avec art Etienne 
+      "Art" = "lifestyle_performing_arts_freq_numeric", # barplot avec manual Etienne
+      "Transport" = "lifestyle_choice_transport_clean", # Même que vote choice LO 
     )
 
     social_vars <- list(
