@@ -36,13 +36,13 @@ socialGroupsServer <- function(id, data) {
     df_social_groups <- readRDS("data/df_canada.rds")
     
     lifestyle_vars <- list(
-      "Vote choice" = "dv_vote_choice",
-      "Left vs Right" = "dv_attitude_leftvsright",
-      "Turnout" = "dv_turnout",
-      "Hunting" = "lifestyle_hunting_freq_numeric",
-      "Manual Tasks" = "lifestyle_manual_tasks_freq_numeric",
-      "Art" = "lifestyle_performing_arts_freq_numeric",
-      "Transport" = "lifestyle_choice_transport_clean"
+      "Vote choice" = "dv_vote_choice", # Barplot LO
+      "Left vs Right" = "dv_attitude_leftvsright", # Dotplot avec coord_flip Etienne
+      "Turnout" = "dv_turnout", # Dotplot avec coord_flip Etienne
+      "Hunting" = "lifestyle_hunting_freq_numeric", # Barplot LO
+      "Manual Tasks" = "lifestyle_manual_tasks_freq_numeric", # Barplot combiné avec Art Etienne
+      "Art" = "lifestyle_performing_arts_freq_numeric", # Barplot combiné avec Manual Etiebbe
+      "Transport" = "lifestyle_choice_transport_clean" # Meme que vote choice LO
     )
     
     social_vars <- list(
@@ -72,9 +72,9 @@ socialGroupsServer <- function(id, data) {
           summarise(count = n(), .groups = 'drop') %>%
           group_by(!!sym(input$social_var)) %>%
           mutate(proportion = count / sum(count)) %>%
-          ungroup()
+          ungroup() %>%
+          ifelse()
 
-     
       # Create and print plot
       p <- ggplot(data = data, 
              aes(x = !!sym(input$social_var), 
@@ -139,5 +139,7 @@ socialGroupsServer <- function(id, data) {
       cat("Turnout plot created successfully\n")
       print(p_turnout)
     })
+
+    output$p
   })
 }
