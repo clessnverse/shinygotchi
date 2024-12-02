@@ -24,7 +24,8 @@ socialGroupsUI <- function(id) {
     mainPanel(
       plotOutput(ns("plot_vote_choice")),
       plotOutput(ns("plot_turnout")),
-      plotOutput(ns("plot_left_vs_right")) 
+      plotOutput(ns("plot_left_vs_right")),
+      plotOutput(ns("plot_manual_vs_art"))  
     )
   )
 }
@@ -50,7 +51,7 @@ socialGroupsServer <- function(id, data) {
       "Left vs Right" = "dv_attitude_leftvsright", # Dotplot avec coord_flip Etienne
       "Turnout" = "dv_turnout", # Dotplot avec coord_flip Etienne
       "Hunting" = "lifestyle_hunting_freq_numeric", # Barplot LO
-      "Manual Tasks" = "lifestyle_manual_tasks_freq_numeric", # Barplot combiné avec Art Etienne
+      "Manual Tasks" = "lifestyle_manual_task_freq_numeric", # Barplot combiné avec Art Etienne
       "Art" = "lifestyle_performing_arts_freq_numeric", # Barplot combiné avec Manual Etiebbe
       "Transport" = "lifestyle_choice_transport_clean" # Meme que vote choice LO
     )
@@ -206,6 +207,68 @@ socialGroupsServer <- function(id, data) {
       
       cat("Left vs Right plot created successfully\n")
       print(p_left_right)
+    })
+    output$plot_manual_vs_art <- renderPlot({
+      # Validate input
+      req(input$social_var)
+      req(df_social_groups)
+      
+      cat("Starting to create Manual Tasks vs Art plot for:", input$social_var, "\n")
+      
+      # Vérifier que les variables existent et sont numériques
+      if (!all(c("lifestyle_manual_task_freq_numeric", "lifestyle_performing_arts_freq_numeric") %in% names(df_social_groups))) {
+        cat("Variables nécessaires non trouvées dans les données.\n")
+        return(NULL)
+      }
+      
+      # Convertir en numérique si nécessaire
+      df_social_groups$lifestyle_manual_task_freq_numeric <- as.numeric(df_social_groups$lifestyle_manual_task_freq_numeric)
+      df_social_groups$lifestyle_performing_arts_freq_numeric <- as.numeric(df_social_groups$lifestyle_performing_arts_freq_numeric)
+      
+      # Calculer les moyennes par groupe social
+      plot_data_manual_art <- tryCatch({
+        data <- df_social_groups %>%
+          filter(!is.na(!!sym(input$social_var))) %>%
+          group_by(!!sym(input$social_var)) %>%
+          summarise(
+            Manual_Tasks = mean(lifestyle_manual_task_freq_numeric, na.rm = TRUE),
+            Art = mean(lifestyle_performing_arts_freq_numeric, na.rm = TRUE),
+            .groups = 'drop'
+          ) %>%
+          mutate(
+            Art = -Art  # Rendre les valeurs de Art négatives
+          ) %>%
+          pivot_longer(cols = c("Manual_Tasks", "Art"), names_to = "Activity", values_to = "Mean_Frequency")
+        
+        cat("Manual vs Art plot data created. Dimensions:", dim(data), "\n")
+        data
+      }, error = function(e) {
+        cat("Error creating Manual vs Art plot data:", e$message, "\n")
+        NULL
+      })
+      
+      req(plot_data_manual_art)
+      
+      # Créer le barplot avec zéro au milieu
+      p_manual_art <- ggplot(data = plot_data_manual_art, 
+                             aes(x = reorder(!!sym(input$social_var), Mean_Frequency), 
+                                 y = Mean_Frequency, 
+                                 fill = Activity)) +
+        geom_bar(stat = "identity", position = "identity") +
+        geom_hline(yintercept = 0, color = "black") +
+        theme_minimal() +
+        labs(title = "Average Frequency of Manual Tasks and Art by Social Group",
+             x = "Social Group",
+             y = "Average Frequency (%)") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_y_continuous(labels = function(x) scales::percent(abs(x)), 
+                           breaks = pretty(plot_data_manual_art$Mean_Frequency),
+                           expand = expansion(mult = c(0.1, 0.1))) +
+        scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato")) +
+        coord_flip()
+      
+      cat("Manual vs Art plot created successfully\n")
+      print(p_manual_art)
     })
   }) 
 }

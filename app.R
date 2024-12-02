@@ -1,6 +1,8 @@
 library(shiny)
 library(ggplot2)
 library(dplyr)
+library(scales)
+library(tidyr)
 
 # Source the module
 source("R/modules/plot_builder/plotBuilderModule.R")
