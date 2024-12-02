@@ -71,7 +71,6 @@ socialGroupsServer <- function(id, data) {
           summarise(count = n(), .groups = 'drop') %>%
           group_by(!!sym(input$social_var)) %>%
           mutate(proportion = count / sum(count)) %>%
-          drop_na() %>%
           ungroup()
 
      
