@@ -11,7 +11,7 @@ ui <- navbarPage(
   "Datagotchi Data Explorer",
    
   tabPanel("Groups",
-    socialGroupsUI("social_explorer"),
+    socialGroupsUI("social_explorer")
   ), 
   tabPanel("Issues",
   ),
@@ -32,6 +32,7 @@ ui <- navbarPage(
 # Define the server logic
 server <- function(input, output, session) {
   plotBuilderServer("plot_builder")
+  socialGroupsServer("social_explorer", data)
 }
 
 # Run the app
