@@ -250,7 +250,7 @@ socialGroupsServer <- function(id, data) {
     output$plot_vote_choice <- renderPlot({
       # Valid parties
       valid_parties <- names(canadian_party_colors)
-      df_social_groups$dv_vote_choice[!(df_social_groups$dv_vote_choice %in% valid_parties)] <- "other"
+      df_social_groups$dv_vote_choice[!(df_social_groups$dv_vote_choice %in% valid_parties)] <- "Autres"
  # Appliquer le mapping à la variable sociale sélectionnée
  df_social_groups <- apply_mapping(df_social_groups, input$social_var)
       # Calculate proportions
