@@ -13,7 +13,6 @@ socialGroupsUI <- function(id) {
             "Socioeconomic Status" = "ses_income",
             "Education" = "ses_education_group",
             "Ethnicity" = "ses_ethnicity",
-            "Religious Affiliation" = "ses_religiosity",
             "Housing Status" = "ses_owner",
             "Religious Groups" = "ses_religion_big_five",
             "Sexual Orientation" = "ses_orientation_factor"
@@ -26,7 +25,8 @@ socialGroupsUI <- function(id) {
       plotOutput(ns("plot_turnout")),
       plotOutput(ns("plot_hunting")),
       plotOutput(ns("plot_left_vs_right")),
-      plotOutput(ns("plot_manual_vs_art"))  
+      plotOutput(ns("plot_manual_vs_art")),
+      plotOutput(ns("plot_transport"))
     )
   )
 }
@@ -46,6 +46,18 @@ socialGroupsServer <- function(id, data) {
       "gpc" = "#3D9B35",
       "other" = "#a6a6a6"
     )
+
+    sns_colors <- c(
+      "Facebook" = "#5064ac",
+      "Instagram" = "#fd0183",
+      "LinkedIn" = "#0077b5",
+      "Pinterest" = "#ec0c2d",
+      "Snapchat" = "#f6f600",
+      "TikTok" = "#121212",
+      "Twitter / X" = "#209cf4",
+      "YouTube" = "#ff0033",
+      "Autre (veuillez préciser)" = "#a6a6a6"
+    )
     
     lifestyle_vars <- list(
       "Vote choice" = "dv_vote_choice", # Barplot LO
@@ -54,7 +66,7 @@ socialGroupsServer <- function(id, data) {
       "Hunting" = "lifestyle_hunting_freq_numeric", # Barplot LO
       "Manual Tasks" = "lifestyle_manual_task_freq_numeric", # Barplot combiné avec Art Etienne
       "Art" = "lifestyle_performing_arts_freq_numeric", # Barplot combiné avec Manual Etiebbe
-      "Transport" = "lifestyle_choice_transport_clean" # Meme que vote choice LO
+      "Transport" = "lifestyle_medsociaux_plus_frequent" # Meme que vote choice LO
     )
     
     social_vars <- list(
@@ -65,7 +77,6 @@ socialGroupsServer <- function(id, data) {
       "Socioeconomic Status" = "ses_income",
       "Education" = "ses_education_group",
       "Ethnicity" = "ses_ethnicity",
-      "Religious Affiliation" = "ses_religiosity",
       "Housing Status" = "ses_owner",
       "Religious Groups" = "ses_religion_big_five",
       "Sexual Orientation" = "ses_orientation_factor"
@@ -279,6 +290,37 @@ socialGroupsServer <- function(id, data) {
 
         ggplot(data = df_hunting, aes(x = !!sym(input$social_var), y = lifestyle_hunting_freq_numeric)) +
           geom_bar(stat = "identity")
+    })
+
+    output$plot_transport <- renderPlot({
+
+      # Valid parties
+
+      # Calculate proportions with error handling
+      data <- df_social_groups %>%
+          filter(!is.na(!!sym(input$social_var)), !is.na(lifestyle_medsociaux_plus_frequent)) %>%
+          group_by(!!sym(input$social_var), lifestyle_medsociaux_plus_frequent) %>%
+          summarise(count = n(), .groups = 'drop') %>%
+          group_by(!!sym(input$social_var)) %>%
+          mutate(proportion = count / sum(count)) %>%
+          ungroup()
+
+      # Create and print plot
+      p <- ggplot(data = data, 
+             aes(x = !!sym(input$social_var), 
+                 y = proportion, 
+                 fill = lifestyle_medsociaux_plus_frequent)) +
+        geom_bar(stat = "identity", position = "dodge") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(title = "Vote Choice by Social Group",
+             x = "Social Group",
+             y = "Proportion",
+             fill = "Vote Choice") +
+        scale_y_continuous(labels = scales::percent) +
+        scale_fill_manual(values = sns_colors)
+      
+      print(p)
     })
 
   }) 
