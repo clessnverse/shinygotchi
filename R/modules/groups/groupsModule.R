@@ -185,10 +185,10 @@ socialGroupsServer <- function(id, data) {
     
     education_labels <- c(
       "educBHS"       = "Sans diplôme",
-      "educHS"        = "Diplôme secondaire",
-      "educPostHS"    = "Diplôme postsecondaire",
-      "educUnivBac"   = "Baccalauréat universitaire",
-      "educUnivSup"   = "Diplôme universitaire supérieur"
+      "educHS"        = "DES",
+      "educPostHS"    = "Postsecondaire",
+      "educUnivBac"   = "Baccalauréat",
+      "educUnivSup"   = "Universitaire supérieur"
     )
     
     ethnicity_labels <- c(
