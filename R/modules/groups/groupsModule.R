@@ -194,161 +194,175 @@ socialGroupsServer <- function(id, data) {
     )
     
     ### Plot: Turnout ###
-    output$plot_turnout <- renderPlot({
-      # Validate input
-      req(input$social_var)
-      req(df_social_groups)
-      
-      # Convert dv_turnout to binary variable if necessary
-      if (!"dv_turnout_binary" %in% names(df_social_groups)) {
-        df_social_groups <- df_social_groups %>%
-          mutate(dv_turnout_binary = ifelse(dv_turnout >= 0.5, "Yes", "No"))
-      }
-      
-      # Calculate turnout rate by social group
-      plot_data_turnout <- df_social_groups %>%
-        filter(!is.na(!!sym(input$social_var)), !is.na(dv_turnout_binary)) %>%
-        group_by(!!sym(input$social_var)) %>%
-        summarise(
-          turnout_rate = mean(dv_turnout_binary == "Yes", na.rm = TRUE),
-          .groups = 'drop'
-        )
-      
-      # Create turnout dot plot
-      p_turnout <- ggplot(data = plot_data_turnout, 
-                          aes(x = reorder(!!sym(input$social_var), turnout_rate), 
-                              y = turnout_rate)) +
-        geom_point(size = 3, color = "blue") +
-        coord_flip() +
-        custom_theme() +
-        theme(axis.text.x = element_text(size = text_size()),
-              axis.text.y = element_text(size = text_size()),
-              plot.title = element_text(size = text_size() + 2),
-              axis.title = element_text(size = text_size())) +
-        labs(title = "Turnout by Social Group",
-             x = "Social Group",
-             y = "Turnout Rate") +
-        scale_y_continuous(labels = scales::percent)
-      print(p_turnout)
-    })
-    
-    output$download_plot_turnout <- downloadHandler(
-      filename = function() {
-        paste("plot_turnout", Sys.Date(), ".png", sep = "")
-      },
-      content = function(file) {
-        # Duplicate the plotting code here
-        if (!"dv_turnout_binary" %in% names(df_social_groups)) {
-          df_social_groups <- df_social_groups %>%
-            mutate(dv_turnout_binary = ifelse(dv_turnout >= 0.5, "Yes", "No"))
-        }
-        
-        plot_data_turnout <- df_social_groups %>%
-          filter(!is.na(!!sym(input$social_var)), !is.na(dv_turnout_binary)) %>%
-          group_by(!!sym(input$social_var)) %>%
-          summarise(
-            turnout_rate = mean(dv_turnout_binary == "Yes", na.rm = TRUE),
-            .groups = 'drop'
-          )
-        
-        p_turnout <- ggplot(data = plot_data_turnout, 
-                            aes(x = reorder(!!sym(input$social_var), turnout_rate), 
-                                y = turnout_rate)) +
-          geom_point(size = 3, color = "blue") +
-          coord_flip() +
-          clessnize::theme_datagotchi_light(base_size = text_size()) +
-          theme(axis.text.x = element_text(size = text_size()),
-                axis.text.y = element_text(size = text_size()),
-                plot.title = element_text(size = text_size() + 2),
-                axis.title = element_text(size = text_size())) +
-          labs(title = "Turnout by Social Group",
-               x = "Social Group",
-               y = "Turnout Rate") +
-          scale_y_continuous(labels = scales::percent)
-        ggsave(file, plot = p_turnout, width = 16, height = 9, units = "in")
-      }
+output$plot_turnout <- renderPlot({
+  # Validate input
+  req(input$social_var)
+  req(df_social_groups)
+  
+  # Convert dv_turnout to binary variable if necessary
+  if (!"dv_turnout_binary" %in% names(df_social_groups)) {
+    df_social_groups <- df_social_groups %>%
+      mutate(dv_turnout_binary = ifelse(dv_turnout >= 0.5, "Yes", "No"))
+  }
+  
+  # Calculate turnout rate by social group
+  plot_data_turnout <- df_social_groups %>%
+    filter(!is.na(!!sym(input$social_var)), !is.na(dv_turnout_binary)) %>%
+    group_by(!!sym(input$social_var)) %>%
+    summarise(
+      turnout_rate = mean(dv_turnout_binary == "Yes", na.rm = TRUE),
+      .groups = 'drop'
     )
+  
+  # Create turnout bar plot with thin horizontal bars
+  p_turnout <- ggplot(data = plot_data_turnout, 
+                      aes(x = reorder(!!sym(input$social_var), turnout_rate), 
+                          y = turnout_rate)) +
+    geom_bar(stat = "identity", width = 0.4, fill = "tomato") +
+    coord_flip() +
+    custom_theme() +
+    theme(axis.text.x = element_text(size = text_size()),
+          axis.text.y = element_text(size = text_size()),
+          plot.title = element_text(size = text_size() + 2),
+          axis.title = element_text(size = text_size()),
+          axis.ticks = element_blank()) +  # Optionnel : supprimer les graduations
+    labs(title = "Turnout by Social Group",
+         x = NULL,  # Supprimer le label de l'axe x car les groupes sociaux sont déjà indiqués
+         y = "Turnout Rate (%)") +
+    scale_y_continuous(labels = scales::percent)
+  
+  print(p_turnout)
+})
+
+    
+output$download_plot_turnout <- downloadHandler(
+  filename = function() {
+    paste("plot_turnout", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    # Duplicate the plotting code here
+    if (!"dv_turnout_binary" %in% names(df_social_groups)) {
+      df_social_groups <- df_social_groups %>%
+        mutate(dv_turnout_binary = ifelse(dv_turnout >= 0.5, "Yes", "No"))
+    }
+    
+    plot_data_turnout <- df_social_groups %>%
+      filter(!is.na(!!sym(input$social_var)), !is.na(dv_turnout_binary)) %>%
+      group_by(!!sym(input$social_var)) %>%
+      summarise(
+        turnout_rate = mean(dv_turnout_binary == "Yes", na.rm = TRUE),
+        .groups = 'drop'
+      )
+    
+    p_turnout <- ggplot(data = plot_data_turnout, 
+                        aes(x = reorder(!!sym(input$social_var), turnout_rate), 
+                            y = turnout_rate)) +
+      geom_bar(stat = "identity", width = 0.5, fill = "tomato") +
+      coord_flip() +
+      clessnize::theme_datagotchi_light(base_size = text_size()) +
+      theme(axis.text.x = element_text(size = text_size()),
+            axis.text.y = element_text(size = text_size()),
+            plot.title = element_text(size = text_size() + 2),
+            axis.title = element_text(size = text_size()),
+            axis.ticks = element_blank()) +  # Optionnel : supprimer les graduations
+      labs(title = "Turnout by Social Group",
+           x = NULL,
+           y = "Turnout Rate (%)") +
+      scale_y_continuous(labels = scales::percent)
+    
+    ggsave(file, plot = p_turnout, width = 16, height = 9, units = "in")
+  }
+)
+
     
     ### Plot: Left vs Right ###
-    output$plot_left_vs_right <- renderPlot({
-      req(input$social_var)
-      req(df_social_groups)
-      
-      if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
-        return(NULL)
-      }
-      
-      if (!is.numeric(df_social_groups$dv_attitude_leftvsright)) {
-        return(NULL)
-      }
-      
-      plot_data_left_right <- df_social_groups %>%
-        filter(!is.na(!!sym(input$social_var)), !is.na(dv_attitude_leftvsright)) %>%
-        group_by(!!sym(input$social_var)) %>%
-        summarise(
-          mean_left_right = mean(dv_attitude_leftvsright, na.rm = TRUE),
-          .groups = 'drop'
-        )
-      
-      p_left_right <- ggplot(data = plot_data_left_right, 
-                             aes(x = reorder(!!sym(input$social_var), mean_left_right), 
-                                 y = mean_left_right)) +
-        geom_point(size = 3, color = "darkgreen") +
-        coord_flip() +
-        custom_theme() +
-        theme(axis.text.x = element_text(size = text_size()),
-              axis.text.y = element_text(size = text_size()),
-              plot.title = element_text(size = text_size() + 2),
-              axis.title = element_text(size = text_size())) +
-        labs(title = "Left vs Right by Social Group",
-             x = "Social Group",
-             y = "Mean Left-Right Attitude (0 = Left, 1 = Right)") +
-        scale_y_continuous(limits = c(0, 1))
-      print(p_left_right)
-    })
-    
-    output$download_plot_left_vs_right <- downloadHandler(
-      filename = function() {
-        paste("plot_left_vs_right", Sys.Date(), ".png", sep = "")
-      },
-      content = function(file) {
-        # Duplicate the plotting code here
-        req(input$social_var)
-        req(df_social_groups)
-        
-        if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
-          return(NULL)
-        }
-        
-        if (!is.numeric(df_social_groups$dv_attitude_leftvsright)) {
-          return(NULL)
-        }
-        
-        plot_data_left_right <- df_social_groups %>%
-          filter(!is.na(!!sym(input$social_var)), !is.na(dv_attitude_leftvsright)) %>%
-          group_by(!!sym(input$social_var)) %>%
-          summarise(
-            mean_left_right = mean(dv_attitude_leftvsright, na.rm = TRUE),
-            .groups = 'drop'
-          )
-        
-        p_left_right <- ggplot(data = plot_data_left_right, 
-                               aes(x = reorder(!!sym(input$social_var), mean_left_right), 
-                                   y = mean_left_right)) +
-          geom_point(size = 3, color = "darkgreen") +
-          coord_flip() +
-          clessnize::theme_datagotchi_light(base_size = text_size()) +
-          theme(axis.text.x = element_text(size = text_size()),
-                axis.text.y = element_text(size = text_size()),
-                plot.title = element_text(size = text_size() + 2),
-                axis.title = element_text(size = text_size())) +
-          labs(title = "Left vs Right by Social Group",
-               x = "Social Group",
-               y = "Mean Left-Right Attitude (0 = Left, 1 = Right)") +
-          scale_y_continuous(limits = c(0, 1))
-        ggsave(file, plot = p_left_right, width = 16, height = 9, units = "in")
-      }
+output$plot_left_vs_right <- renderPlot({
+  req(input$social_var)
+  req(df_social_groups)
+  
+  if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
+    return(NULL)
+  }
+  
+  if (!is.numeric(df_social_groups$dv_attitude_leftvsright)) {
+    return(NULL)
+  }
+  
+  plot_data_left_right <- df_social_groups %>%
+    filter(!is.na(!!sym(input$social_var)), !is.na(dv_attitude_leftvsright)) %>%
+    group_by(!!sym(input$social_var)) %>%
+    summarise(
+      mean_left_right = mean(dv_attitude_leftvsright, na.rm = TRUE),
+      .groups = 'drop'
     )
+  
+  p_left_right <- ggplot(data = plot_data_left_right, 
+                         aes(x = reorder(!!sym(input$social_var), mean_left_right), 
+                             y = mean_left_right)) +
+    geom_point(size = 3, color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
+    coord_flip() +
+    custom_theme() +
+    theme(axis.text.x = element_text(size = text_size()),
+          axis.text.y = element_text(size = text_size()),
+          plot.title = element_text(size = text_size() + 2),
+          axis.title = element_text(size = text_size())) +
+    labs(title = "Positionnement Gauche-Droite par Groupe Social",
+         x = NULL,
+         y = NULL) +
+    scale_y_continuous(limits = c(0, 1),
+                       breaks = c(0.25, 0.5, 0.75),
+                       labels = c("Gauche", "Centre", "Droite"))
+  print(p_left_right)
+})
+
+    
+output$download_plot_left_vs_right <- downloadHandler(
+  filename = function() {
+    paste("plot_left_vs_right", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    # Duplicate the plotting code here
+    req(input$social_var)
+    req(df_social_groups)
+    
+    if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
+      return(NULL)
+    }
+    
+    if (!is.numeric(df_social_groups$dv_attitude_leftvsright)) {
+      return(NULL)
+    }
+    
+    plot_data_left_right <- df_social_groups %>%
+      filter(!is.na(!!sym(input$social_var)), !is.na(dv_attitude_leftvsright)) %>%
+      group_by(!!sym(input$social_var)) %>%
+      summarise(
+        mean_left_right = mean(dv_attitude_leftvsright, na.rm = TRUE),
+        .groups = 'drop'
+      )
+    
+    p_left_right <- ggplot(data = plot_data_left_right, 
+                           aes(x = reorder(!!sym(input$social_var), mean_left_right), 
+                               y = mean_left_right)) +
+      geom_point(size = 3, color = "black") +
+      geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
+      coord_flip() +
+      clessnize::theme_datagotchi_light(base_size = text_size()) +
+      theme(axis.text.x = element_text(size = text_size()),
+            axis.text.y = element_text(size = text_size()),
+            plot.title = element_text(size = text_size() + 2),
+            axis.title = element_text(size = text_size())) +
+      labs(title = "Positionnement Gauche-Droite par Groupe Social",
+           x = NULL,
+           y = NULL) +
+      scale_y_continuous(limits = c(0, 1),
+                         breaks = c(0.25, 0.5, 0.75),
+                         labels = c("Gauche", "Centre", "Droite"))
+    ggsave(file, plot = p_left_right, width = 16, height = 9, units = "in")
+  }
+)
+
     
     ### Plot: Manual Tasks vs Art ###
     output$plot_manual_vs_art <- renderPlot({
