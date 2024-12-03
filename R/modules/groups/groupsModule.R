@@ -46,7 +46,7 @@ socialGroupsServer <- function(id, data) {
   moduleServer(id, function(input, output, session) {
     
     # Reactive value for text size
-    text_size <- reactiveVal(20)  # Default text size
+    text_size <- reactiveVal(24)  # Default text size
     
     # Observers for text size adjustment
     observeEvent(input$increase_text_size, {
