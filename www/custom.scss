@@ -1,0 +1,48 @@
+
+// Custom SCSS styles
+$font-family-base: "Poppins", sans-serif;
+
+// Card styles
+.card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2C3E50;
+  border-radius: 4px;
+}
+
+// Tooltip customization
+.tooltip {
+  font-family: $font-family-base;
+  font-size: 0.9rem;
+}
+
+// Form control styling
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+    border-color: #2C3E50;
+  }
+}
+
+// Progress bar animation
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+}
+
