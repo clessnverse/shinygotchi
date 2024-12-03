@@ -6,6 +6,7 @@ library(rlang)
 
 # Interface Utilisateur (UI)
 ui <- fluidPage(
+  includeCSS("www/styles.css"),
   titlePanel("Application Shiny avec Manipulation de Données et Visualisation"),
   
   # Création des onglets
