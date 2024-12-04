@@ -73,11 +73,12 @@ custom_css <- "
 }
 
 .title-box {
-  background: linear-gradient(135deg, #2C3E50, #3498DB);
-  color: white;
+  background: white;
+  color: black;
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
+  border: 1px solid black;
 }
 
 .animate-fade-in {
@@ -118,7 +119,7 @@ navbarPage(
             width = 12,
             div(
               class = "title-box",
-              h2("Social Groups Analysis"),
+              h2("Groupes sociaux"),
               p("Explore demographic and behavioral patterns across different social groups")
             )
           )
