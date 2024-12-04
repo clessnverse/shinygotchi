@@ -4,51 +4,51 @@ socialGroupsUI <- function(id) {
   
   sidebarLayout(
     sidebarPanel( 
-        selectInput(ns("social_var"), "Select Social Group Variable:",
+        selectInput(ns("social_var"), "Sélectionnez la variable du groupe social :",
           choices = c(
-            "Age Groups" = "ses_age_group",
-            "Gender" = "ses_gender_factor",
-            "Geographic Location" = "ses_province",
-            "Language" = "ses_language",
-            "Socioeconomic Status" = "ses_income",
-            "Education" = "ses_education_group",
-            "Ethnicity" = "ses_ethnicity",
-            "Housing Status" = "ses_owner",
-            "Religious Groups" = "ses_religion_big_five",
-            "Sexual Orientation" = "ses_orientation_factor"
+            "Groupes d'âges" = "ses_age_group",
+            "Genre" = "ses_gender_factor",
+            "Province" = "ses_province",
+            "Langue" = "ses_language",
+            "Groupes de revenues" = "ses_income",
+            "Éducation" = "ses_education_group",
+            "Ethnicité" = "ses_ethnicity",
+            "Statut de logement" = "ses_owner",
+            "Groupes religieux" = "ses_religion_big_five",
+            "Orientation sexuelle" = "ses_orientation_factor"
           )
         ),
         hr(),
-        h4("Adjust Text Size"),
+        h4("Ajuster la taille du texte."),
         actionButton(ns("decrease_text_size"), "-"),
         actionButton(ns("increase_text_size"), "+")
     ),
     
     mainPanel(
       tabsetPanel(
-        tabPanel("Vote Choice",
+        tabPanel("Choix de vote",
                  plotOutput(ns("plot_vote_choice"), height = "600px"),
-                 downloadButton(ns("download_plot_vote_choice"), "Download Plot")
+                 downloadButton(ns("download_plot_vote_choice"), "Télécharger le graphique")
         ),
-        tabPanel("Turnout",
+        tabPanel("Participation électorale",
                  plotOutput(ns("plot_turnout"), height = "600px"),
-                 downloadButton(ns("download_plot_turnout"), "Download Plot")
+                 downloadButton(ns("download_plot_turnout"), "Télécharger le graphique")
         ),
-        tabPanel("Left vs Right",
+        tabPanel("Gauche vs Droite",
                  plotOutput(ns("plot_left_vs_right"), height = "600px"),
-                 downloadButton(ns("download_plot_left_vs_right"), "Download Plot")
+                 downloadButton(ns("download_plot_left_vs_right"), "Télécharger le graphique")
         ),
-        tabPanel("Manual Tasks vs Art",
+        tabPanel("Tâches manuelles vs Art",
                  plotOutput(ns("plot_manual_vs_art"), height = "600px"),
-                 downloadButton(ns("download_plot_manual_vs_art"), "Download Plot")
+                 downloadButton(ns("download_plot_manual_vs_art"), "Télécharger le graphique")
         ),
-        tabPanel("Hunting",
+        tabPanel("Chasse",
                  plotOutput(ns("plot_hunting"), height = "600px"),
-                 downloadButton(ns("download_plot_hunting"), "Download Plot")
+                 downloadButton(ns("download_plot_hunting"), "Télécharger le graphique")
         ),
-        tabPanel("Transport",
-                 plotOutput(ns("plot_transport"), height = "600px"),
-                 downloadButton(ns("download_plot_transport"), "Download Plot")
+        tabPanel("Réseaux sociaux",
+                 plotOutput(ns("plot_reseaux"), height = "600px"),
+                 downloadButton(ns("download_plot_reseaux"), "Télécharger le graphique")
         )
       )
     )
@@ -106,7 +106,7 @@ socialGroupsServer <- function(id, data) {
       "Hunting" = "lifestyle_hunting_freq_numeric",
       "Manual Tasks" = "lifestyle_manual_task_freq_numeric",
       "Art" = "lifestyle_performing_arts_freq_numeric",
-      "Transport" = "lifestyle_medsociaux_plus_frequent"
+      "Reseaux" = "lifestyle_medsociaux_plus_frequent"
     )
     
     social_vars <- list(
@@ -275,10 +275,10 @@ socialGroupsServer <- function(id, data) {
               legend.title = element_text(size = text_size()),
               plot.title = element_text(size = text_size() + 2),
               axis.title = element_text(size = text_size())) +
-        labs(title = "Vote Choice by Social Group",
-             x = "Social Group",
+        labs(title = "Choix de vote par groupe social",
+             x = "Groupe social",
              y = "Proportion",
-             fill = "Vote Choice") +
+             fill = "Choix de vote") +
         scale_y_continuous(labels = scales::percent) +
         scale_fill_manual(values = canadian_party_colors)
       print(p)
@@ -361,9 +361,9 @@ output$plot_turnout <- renderPlot({
           plot.title = element_text(size = text_size() + 2),
           axis.title = element_text(size = text_size()),
           axis.ticks = element_blank()) +  # Optionnel : supprimer les graduations
-    labs(title = "Turnout by Social Group",
+    labs(title = "Participation électorale par groupe social",
          x = NULL,  # Supprimer le label de l'axe x car les groupes sociaux sont déjà indiqués
-         y = "Turnout Rate (%)") +
+         y = "Taux de participation électorale (%)") +
     scale_y_continuous(labels = scales::percent)
   
   print(p_turnout)
@@ -566,9 +566,9 @@ output$download_plot_left_vs_right <- downloadHandler(
               legend.title = element_text(size = text_size()),
               plot.title = element_text(size = text_size() + 2),
               axis.title = element_text(size = text_size())) +
-        labs(title = "Average Frequency of Manual Tasks and Art by Social Group",
-             x = "Social Group",
-             y = "Average Frequency (%)") +
+        labs(title = "Fréquence moyenne des tâches manuelles et de l'art par groupe social",
+             x = "Groupe social",
+             y = "Fréquence moyenne (%)") +
         scale_y_continuous(labels = function(x) scales::percent(abs(x)), 
                            breaks = pretty(plot_data_manual_art$Mean_Frequency),
                            expand = expansion(mult = c(0.1, 0.1))) +
@@ -670,9 +670,9 @@ output$download_plot_left_vs_right <- downloadHandler(
               axis.text.y = element_text(size = text_size()),
               plot.title = element_text(size = text_size() + 2),
               axis.title = element_text(size = text_size())) +
-        labs(title = "Average Hunting Frequency by Social Group",
-             x = "Social Group",
-             y = "Average Hunting Frequency")
+        labs(title = "Fréquence moyenne de la chasse par groupe social",
+             x = "Groupe social",
+             y = "Fréquence moyenne de la chasse")
       print(p)
     })
     
@@ -695,15 +695,15 @@ output$download_plot_left_vs_right <- downloadHandler(
          axis.text.y = element_text(size = text_size()),
          plot.title = element_text(size = text_size() + 2),
          axis.title = element_text(size = text_size())) +
-   labs(title = "Average Hunting Frequency by Social Group",
-        x = "Social Group",
-        y = "Average Hunting Frequency")
+   labs(title = "Fréquence moyenne de la chasse par groupe social",
+        x = "Groupe social",
+        y = "Fréquence moyenne de la chasse")
         ggsave(file, plot = p, width = 16, height = 9, units = "in")
       }
     )
     
     ### Plot: Transport ###
-    output$plot_transport <- renderPlot({
+    output$plot_reseaux <- renderPlot({
       # Appliquer le mapping à la variable sociale sélectionnée
  df_social_groups <- apply_mapping(df_social_groups, input$social_var)
       data <- df_social_groups %>%
@@ -726,18 +726,18 @@ output$download_plot_left_vs_right <- downloadHandler(
               legend.title = element_text(size = text_size()),
               plot.title = element_text(size = text_size() + 2),
               axis.title = element_text(size = text_size())) +
-        labs(title = "Most Frequent Social Media by Social Group",
-             x = "Social Group",
-             y = "Proportion",
-             fill = "Social Media") +
+        labs(title = "Réseaux sociaux les plus fréquentés par groupe social",
+             x = "Groupe social",
+             y = "Proportion (%)",
+             fill = "Réseau social") +
         scale_y_continuous(labels = scales::percent) +
         scale_fill_manual(values = sns_colors)
       print(p)
     })
     
-    output$download_plot_transport <- downloadHandler(
+    output$download_plot_reseaux <- downloadHandler(
       filename = function() {
-        paste("plot_transport", Sys.Date(), ".png", sep = "")
+        paste("plot_reseaux", Sys.Date(), ".png", sep = "")
       },
       content = function(file) {
         df_social_groups <- apply_mapping(df_social_groups, input$social_var)

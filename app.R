@@ -52,14 +52,14 @@ ui <- tagList(
 navbarPage(
   title = tagList(
     tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "30px"),
-    span("Datagotchi Data Explorer")
+    span("Explorateur de données")
   ),
     theme = my_theme,
     id = "nav",
     
     # Groups Tab
     tabPanel(
-      "Groups",
+      "Groupes sociaux",
       icon = icon("users"),
       div(
         class = "animate-fade-in",
@@ -69,7 +69,7 @@ navbarPage(
             div(
               class = "title-box",
               h2("Groupes sociaux"),
-              p("Explore demographic and behavioral patterns across different social groups")
+              p("Explorer les schémas démographiques et comportementaux à travers différents groupes sociaux.")
             )
           )
         ),
@@ -79,7 +79,7 @@ navbarPage(
     
     # Issues Tab
     tabPanel(
-      "Issues",
+      "Enjeux",
       icon = icon("comments"),
       div(class = "animate-fade-in",
         # Add your Issues content here
@@ -97,7 +97,7 @@ navbarPage(
     
     # Parties Tab
     tabPanel(
-      "Parties",
+      "Partis",
       icon = icon("flag"),
       div(class = "animate-fade-in",
         # Add your Parties content here
@@ -106,7 +106,7 @@ navbarPage(
     
     # Ridings Tab
     tabPanel(
-      "Ridings",
+      "Circonscriptions",
       icon = icon("map-marker-alt"),
       div(class = "animate-fade-in",
         # Add your Ridings content here
@@ -115,7 +115,7 @@ navbarPage(
     
     # Plot Builder Tab
     tabPanel(
-      "Plot Builder",
+      "Constructeur de graphiques",
       icon = icon("chart-bar"),
       div(
         class = "animate-fade-in",
@@ -124,8 +124,8 @@ navbarPage(
             width = 12,
             div(
               class = "title-box",
-              h2("Custom Plot Builder"),
-              p("Create and customize your own data visualizations")
+              h2("Créateur de Graphiques Personnalisés."),
+              p("Créez et personnalisez vos propres visualisations de données.")
             )
           )
         ),
@@ -141,7 +141,7 @@ server <- function(input, output, session) {
   waiter_show(
     html = tagList(
       spin_flower(),
-      h3("Loading Datagotchi Explorer...", style = "color: #2C3E50;")
+      h3("Chargement de l'explorateur de données Datagotchi...", style = "color: #2C3E50;")
     ),
     color = "#ffffff"
   )
