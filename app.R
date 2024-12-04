@@ -79,8 +79,7 @@ navbarPage(
     
     tabPanel(
       "Enjeux",
-      icon = icon("comments"),
-      div(class = "animate-fade-in construction-container",
+      icon = icon("comments"), div(class = "animate-fade-in construction-container",
           div(class = "construction-content",
               tags$img(src = "construction-worker.gif", 
                       class = "construction-gif",

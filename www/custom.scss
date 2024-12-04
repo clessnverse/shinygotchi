@@ -194,6 +194,7 @@ svg {
   width: 100%;        /* L'image occupe 100% de la largeur disponible */
   max-width: 750px;   /* Largeur maximale de l'image */
   height: auto;       /* Hauteur automatique pour conserver les proportions */
+  top-margin: 30%;
 }
 
 .construction-gif {
@@ -201,4 +202,32 @@ svg {
   height: auto;
   margin: 0 auto;
   display: block;
+}
+
+// Partner logos styling in sidebar
+.corner-image {
+  width: 100%;           // Take full width of sidebar
+  height: auto;          // Maintain aspect ratio
+  margin-top: 2rem;      // Add space above the image
+  padding: 1rem;         // Add some padding around the image
+  display: block;        // Ensure block display
+  object-fit: contain;   // Ensure image fits while maintaining aspect ratio
+}
+
+// Ensure sidebar panel has proper spacing
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// Style the well (sidebar container)
+.well {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .corner-image {
+    margin-top: auto;    // Push the image to the bottom
+  }
 }

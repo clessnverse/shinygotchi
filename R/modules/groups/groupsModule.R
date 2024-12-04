@@ -2,29 +2,40 @@
 socialGroupsUI <- function(id) {
   ns <- NS(id)
   
-  div(
+div(
     class = "groups-module-container",
-  sidebarLayout(
-    sidebarPanel( 
-        selectInput(ns("social_var"), "Sélectionnez la variable du groupe social :",
-          choices = c(
-            "Groupes d'âges" = "ses_age_group",
-            "Genre" = "ses_gender_factor",
-            "Province" = "ses_province",
-            "Langue" = "ses_language",
-            "Groupes de revenues" = "ses_income",
-            "Éducation" = "ses_education_group",
-            "Ethnicité" = "ses_ethnicity",
-            "Statut de logement" = "ses_owner",
-            "Groupes religieux" = "ses_religion_big_five",
-            "Orientation sexuelle" = "ses_orientation_factor"
-          )
+    sidebarLayout(
+      sidebarPanel(
+        div(
+          class = "sidebar-content",
+          selectInput(ns("social_var"), "Sélectionnez la variable du groupe social :",
+            choices = c(
+              "Groupes d'âges" = "ses_age_group",
+              "Genre" = "ses_gender_factor",
+              "Province" = "ses_province",
+              "Langue" = "ses_language",
+              "Groupes de revenues" = "ses_income",
+              "Éducation" = "ses_education_group",
+              "Ethnicité" = "ses_ethnicity",
+              "Statut de logement" = "ses_owner",
+              "Groupes religieux" = "ses_religion_big_five",
+              "Orientation sexuelle" = "ses_orientation_factor"
+            )
+          ),
+          hr(),
+          h4("Ajuster la taille du texte."),
+          actionButton(ns("decrease_text_size"), "-"),
+          actionButton(ns("increase_text_size"), "+")
         ),
-        hr(),
-        h4("Ajuster la taille du texte."),
-        actionButton(ns("decrease_text_size"), "-"),
-        actionButton(ns("increase_text_size"), "+")
-    ),
+        div(
+          class = "sidebar-partners",
+          tags$img(
+            src = "datagotchi_partners.png",
+            class = "corner-image",
+            alt = "Logos des partenaires"
+          )
+        )
+      ),
     
     mainPanel(
       tabsetPanel(
@@ -56,10 +67,7 @@ socialGroupsUI <- function(id) {
     )
     ),
      # L'image à afficher
-     tags$img(
-      src = "datagotchi_partners.png",
-      class = "corner-image"
-    )
+     
   )
 }
 
