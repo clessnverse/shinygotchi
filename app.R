@@ -34,19 +34,20 @@ my_theme <- bs_theme(
 ui <- tagList(
   useWaiter(),  # Loading screen
   useShinyjs(),
-  
-tags$head(
+  tags$head(
   tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"),
   tags$style(HTML("
-      @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    @font-face {
+      font-family: 'PixelOperatorSC';
+      src: url('PixelOperatorSC.ttf') format('truetype');
+    }
 
-      /* Apply VT323 globally */
-      body, label, input, button, select, textarea, h1, h2, h3, h4, h5, h6 {
-        font-family: 'VT323', monospace !important;
-      }
+    /* Apply PixelOperatorSC globally */
+    body, label, input, button, select, textarea, h1, h2, h3, h4, h5, h6 {
+      font-family: 'PixelOperatorSC', monospace !important;
+    }
   "))
-)
-,
+),
   
 navbarPage(
   title = tagList(
