@@ -183,3 +183,18 @@ svg {
   margin: 0 auto;
 }
 
+/* CSS spécifique pour le groupsModule */
+.groups-module-container {
+  position: relative;
+}
+
+.groups-module-container .corner-image {
+  position: absolute;
+  bottom: 0;
+  left: 0; /* Déplacez l'image légèrement en dehors du conteneur */
+  margin-left: -110px;
+  margin-bottom: 100px;
+  z-index: 9999;
+  width: 750px;
+  height: auto;
+}

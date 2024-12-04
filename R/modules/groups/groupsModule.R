@@ -2,6 +2,8 @@
 socialGroupsUI <- function(id) {
   ns <- NS(id)
   
+  div(
+    class = "groups-module-container",
   sidebarLayout(
     sidebarPanel( 
         selectInput(ns("social_var"), "Sélectionnez la variable du groupe social :",
@@ -52,9 +54,15 @@ socialGroupsUI <- function(id) {
         )
       )
     )
-    
+    ),
+     # L'image à afficher
+     tags$img(
+      src = "datagotchi_partners.png",
+      class = "corner-image"
+    )
   )
 }
+
 
 # Server Module
 socialGroupsServer <- function(id, data) {
