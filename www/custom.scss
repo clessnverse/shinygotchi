@@ -181,53 +181,74 @@ svg {
   margin: 0 auto;
 }
 
-/* CSS spécifique pour le groupsModule */
+// Partner logos styling in sidebar
 .groups-module-container {
-  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.groups-module-container .corner-image {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 9999;
-  width: 100%;        /* L'image occupe 100% de la largeur disponible */
-  max-width: 750px;   /* Largeur maximale de l'image */
-  height: auto;       /* Hauteur automatique pour conserver les proportions */
-  top-margin: 30%;
+.sidebar-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.construction-gif {
-  width: 200px;  /* or whatever size you prefer */
-  height: auto;
-  margin: 0 auto;
+.well {
+  display: flex !important;
+  flex-direction: column;
+  height: 85vh !important;
+}
+
+.sidebar-content {
+  flex: 0 0 auto;
+}
+
+.corner-image {
+  width: 100%;
+  max-width: 100%;
+  margin-top: auto;
+  padding: 1rem;
   display: block;
 }
 
+// Ensure the sidebar panel stretches
+.col-sm-4 {
+  height: 100%;
+}
+
+// Make sure the main content area also stretches appropriately
+.col-sm-8 {
+  height: 100%;
+}
+
 // Partner logos styling in sidebar
+.sidebar-partners {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  // Changed from flex-end to center
+  margin-top: 2rem;        // Reduced from previous value
+  padding: 1rem;
+}
+
 .corner-image {
-  width: 100%;           // Take full width of sidebar
-  height: auto;          // Maintain aspect ratio
-  margin-top: 2rem;      // Add space above the image
-  padding: 1rem;         // Add some padding around the image
-  display: block;        // Ensure block display
-  object-fit: contain;   // Ensure image fits while maintaining aspect ratio
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  margin-bottom: 2rem;    // Added margin at the bottom
 }
 
-// Ensure sidebar panel has proper spacing
-.sidebar-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-// Style the well (sidebar container)
 .well {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
-  height: 100%;
+  min-height: 70vh !important;  // Reduced from 85vh to 70vh
+  padding-bottom: 1rem;        // Reduced padding
+}
 
-  .corner-image {
-    margin-top: auto;    // Push the image to the bottom
-  }
+.sidebar-content {
+  flex: 0 0 auto;
+  margin-bottom: 1rem;
 }

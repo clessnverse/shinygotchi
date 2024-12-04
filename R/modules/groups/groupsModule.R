@@ -2,7 +2,7 @@
 socialGroupsUI <- function(id) {
   ns <- NS(id)
   
-div(
+  div(
     class = "groups-module-container",
     sidebarLayout(
       sidebarPanel(
@@ -29,6 +29,7 @@ div(
         ),
         div(
           class = "sidebar-partners",
+          style = "flex: 1; display: flex; flex-direction: column; justify-content: flex-end;",
           tags$img(
             src = "datagotchi_partners.png",
             class = "corner-image",
@@ -36,7 +37,7 @@ div(
           )
         )
       ),
-    
+
     mainPanel(
       tabsetPanel(
         tabPanel("Choix de vote",
