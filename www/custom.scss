@@ -1,10 +1,74 @@
-// Custom SCSS styles
-$font-family-base: "PixelOperatorSC", sans-serif;
+// Exclude Font Awesome icons from global font override
+.fa, .fas, .far, .fab {
+  font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands" !important;
+  font-weight: 900; /* Ensure correct weight for icons */
+}
+
+// Navbar
+.navbar {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+// Navigation tabs
+.nav-tabs .nav-link.active {
+  border-bottom: 3px solid #2C3E50;
+  font-weight: bold;
+}
 
 // Card styles
 .card {
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+// Button styles
+.btn-primary {
+  border-radius: 25px;
+  padding: 8px 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+// Loading screen
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255,255,255,0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+// Title box
+.title-box {
+  background: white;
+  color: black;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid black;
+}
+
+// Animation
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 // Custom scrollbar
@@ -33,7 +97,7 @@ $font-family-base: "PixelOperatorSC", sans-serif;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   transition: all 0.3s ease;
-  
+
   &:focus {
     box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
     border-color: #2C3E50;

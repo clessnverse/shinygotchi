@@ -30,75 +30,23 @@ my_theme <- bs_theme(
 ) %>%
   bs_add_rules(sass::sass_file("www/custom.scss"))
 
-# Custom CSS
-custom_css <- "
-.navbar {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.nav-tabs .nav-link.active {
-  border-bottom: 3px solid #2C3E50;
-  font-weight: bold;
-}
-
-.card {
-  border-radius: 15px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-}
-
-.btn-primary {
-  border-radius: 25px;
-  padding: 8px 20px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-
-#loading-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255,255,255,0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.title-box {
-  background: white;
-  color: black;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  border: 1px solid black;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-"
-
 # UI Definition
 ui <- tagList(
   useWaiter(),  # Loading screen
   useShinyjs(),
-  tags$head(
-    tags$style(custom_css),
-    tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap")
-  ),
+  
+tags$head(
+  tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"),
+  tags$style(HTML("
+      @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+      /* Apply VT323 globally */
+      body, label, input, button, select, textarea, h1, h2, h3, h4, h5, h6 {
+        font-family: 'VT323', monospace !important;
+      }
+  "))
+)
+,
   
 navbarPage(
   title = tagList(
