@@ -78,44 +78,43 @@ navbarPage(
     ),
     
     tabPanel(
-      "Issues",
+      "Enjeux",
       icon = icon("comments"),
       div(class = "animate-fade-in construction-container",
           div(class = "construction-content",
-              # Include the SVG animation
-              includeHTML("www/construction-worker.svg"),
-              h2("Section en Construction", class = "construction-title"),
-              p("Cette section est en cours de développement", 
-                class = "construction-text")
+              tags$img(src = "construction-worker.gif", 
+                      class = "construction-gif",
+                      alt = "Construction worker with jackhammer"),
+              h2("Section en Construction", class = "construction-title")
           )
       )
-    ),
-    
+    ),    
     # Lifestyles Tab
     tabPanel(
       "Lifestyles",
       icon = icon("heart"),
-      div(class = "animate-fade-in",
-        div(class = "construction-container",
-          tags$i(class = "fas fa-hard-hat construction-icon"),
-          div(class = "construction-text",
-            "Section\nen\nconstruction"
+      div(class = "animate-fade-in construction-container",
+          div(class = "construction-content",
+              tags$img(src = "construction-worker.gif", 
+                      class = "construction-gif",
+                      alt = "Construction worker with jackhammer"),
+              h2("Section en Construction", class = "construction-title")
           )
-        )
       )
+
     ),
     
     # Parties Tab
     tabPanel(
       "Partis",
       icon = icon("flag"),
-      div(class = "animate-fade-in",
-        div(class = "construction-container",
-          tags$i(class = "fas fa-hard-hat construction-icon"),
-          div(class = "construction-text",
-            "Section\nen\nconstruction"
+      div(class = "animate-fade-in construction-container",
+          div(class = "construction-content",
+              tags$img(src = "construction-worker.gif", 
+                      class = "construction-gif",
+                      alt = "Construction worker with jackhammer"),
+              h2("Section en Construction", class = "construction-title")
           )
-        )
       )
     ),
     
@@ -123,13 +122,13 @@ navbarPage(
     tabPanel(
       "Circonscriptions",
       icon = icon("map-marker-alt"),
-      div(class = "animate-fade-in",
-        div(class = "construction-container",
-          tags$i(class = "fas fa-hard-hat construction-icon"),
-          div(class = "construction-text",
-            "Section\nen\nconstruction"
+      div(class = "animate-fade-in construction-container",
+          div(class = "construction-content",
+              tags$img(src = "construction-worker.gif", 
+                      class = "construction-gif",
+                      alt = "Construction worker with jackhammer"),
+              h2("Section en Construction", class = "construction-title")
           )
-        )
       )
     ),    
     # Plot Builder Tab
