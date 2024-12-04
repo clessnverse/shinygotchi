@@ -149,7 +149,6 @@
 }
 
 .construction-title {
-  font-family: 'Poppins', sans-serif;
   font-weight: 600;
   font-size: 2rem;
   color: #2C3E50;
@@ -159,7 +158,6 @@
 }
 
 .construction-text {
-  font-family: 'Poppins', sans-serif;
   color: #666;
   font-size: 1.1rem;
   margin-bottom: 1rem;
@@ -183,3 +181,9 @@ svg {
   margin: 0 auto;
 }
 
+.construction-gif {
+  width: 200px;  /* or whatever size you prefer */
+  height: auto;
+  margin: 0 auto;
+  display: block;
+}
