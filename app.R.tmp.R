@@ -99,11 +99,11 @@ ui <- tagList(
     tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap")
   ),
   
-navbarPage(
-  title = tagList(
-    tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "30px"),
-    span("Datagotchi Data Explorer")
-  ),
+  navbarPage(
+    title = tagList(
+      uiOutput("logo_image"),
+      span("Datagotchi Data Explorer")
+    ),
     theme = my_theme,
     id = "nav",
     
@@ -199,6 +199,15 @@ server <- function(input, output, session) {
   # Initialize modules
   plotBuilderServer("plot_builder")
   socialGroupsServer("social_explorer", data)
+
+  output$logo_image <- renderUI({
+    tags$img(
+      src = "datagotchi.png",
+      height = "30px",
+      style = "margin-right: 10px; vertical-align: middle;",
+      alt = "Datagotchi Logo"
+    )
+  })
   
   # Hide loading screen after delay
   Sys.sleep(1)  # Simulate loading time
@@ -211,12 +220,7 @@ server <- function(input, output, session) {
       $(".tab-pane.active").fadeIn(500);
     ')
   })
-
-  output$logo_image <- renderUI({
-    tags$img(src = "datagotchi.png", height = "30px")
-  })
 }
-
 
 # Run the application
 shinyApp(ui = ui, server = server)
