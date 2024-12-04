@@ -130,3 +130,56 @@
   margin-bottom: 20px;
   color: #2C3E50;
 }
+
+.construction-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+}
+
+.construction-content {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  animation: float 6s ease-in-out infinite;
+}
+
+.construction-title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 2rem;
+  color: #2C3E50;
+  margin: 1.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.construction-text {
+  font-family: 'Poppins', sans-serif;
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+svg {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+
