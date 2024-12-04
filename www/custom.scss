@@ -189,12 +189,11 @@ svg {
 .groups-module-container .corner-image {
   position: absolute;
   bottom: 0;
-  left: 0; /* Déplacez l'image légèrement en dehors du conteneur */
-  margin-left: -110px;
-  margin-bottom: 100px;
+  left: 0;
   z-index: 9999;
-  width: 750px;
-  height: auto;
+  width: 100%;        /* L'image occupe 100% de la largeur disponible */
+  max-width: 750px;   /* Largeur maximale de l'image */
+  height: auto;       /* Hauteur automatique pour conserver les proportions */
 }
 
 .construction-gif {
