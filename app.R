@@ -5,24 +5,18 @@ library(ggplot2)
 library(dplyr)
 library(scales)
 library(tidyr)
-<<<<<<< HEAD
 library(shinydashboard)
 library(shinyjs)
 library(waiter)
 library(shinycssloaders)
 library(fresh)
 library(bslib)
-library(sass)
 library(fontawesome)
-=======
-library(slickR)
->>>>>>> ae783000fd72067f9f4f6b9edfa24a3e2195c30a
 
 # Source modules
 source("R/modules/plot_builder/plotBuilderModule.R")
 source("R/modules/groups/groupsModule.R")
 
-<<<<<<< HEAD
 # Custom theme
 my_theme <- bs_theme(
   version = 5,
@@ -35,38 +29,6 @@ my_theme <- bs_theme(
   danger = "#E74C3C"
 ) %>%
   bs_add_rules(sass::sass_file("www/custom.scss"))
-=======
-# Define the UI
-ui <- navbarPage(
-  title = "Datagotchi Data Explorer",
-    
-  # Inclure la police dans l'UI
-  header = tagList(
-    tags$head(
-      tags$style(HTML("
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-/* Application de la police VT323 à l'ensemble du contenu */
-body, label, input, button, select, textarea, h1, h2, h3, h4, h5, h6 {
-  font-family: 'VT323', cursive, sans-serif;
-  font-size: 150%;
-        }
-      "))
-    )
-  ),
-
-  tabPanel("Groups",
-    socialGroupsUI("social_explorer")
-  ), 
-  tabPanel("Issues",
-  ),
-    tabPanel("Lifestyles",
-  ),
-  tabPanel("Parties",
-  ),
-  tabPanel("Ridings",
-  ),
->>>>>>> ae783000fd72067f9f4f6b9edfa24a3e2195c30a
 
 # Custom CSS
 custom_css <- "
@@ -138,11 +100,12 @@ ui <- tagList(
   ),
   
   navbarPage(
-    title = div(
+    title = tagList(
       tags$img(src = "datagotchi.png", height = "30px", style = "margin-right: 10px; vertical-align: middle;"),
-      "Datagotchi Data Explorer",
-      class = "animate-fade-in"
+      span("Datagotchi Data Explorer")
     ),
+    theme = my_theme,
+    id = "nav",
     
     # Groups Tab
     tabPanel(
