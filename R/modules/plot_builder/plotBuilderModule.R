@@ -7,12 +7,11 @@ library(dplyr)
 # Module UI
 plotBuilderUI <- function(id) {
   ns <- NS(id)
-  
+  df <- readRDS("data/df.rds") 
   sidebarLayout(
     sidebarPanel(
       # Correctement namespacer le fileInput
-      fileInput(ns("datafile"), "Upload Data File",
-                accept = c(".csv", ".rds", ".sav")),
+      
       # Select plot type
       radioButtons(
         ns("plotType"),
@@ -77,22 +76,13 @@ plotBuilderServer <- function(id) {
   library(cowplot)
 
  # Reactive expression to read the uploaded data
- dataInput <- reactive({
-  req(input$datafile)
-  ext <- tools::file_ext(input$datafile$name)
-  df <- switch(ext,
-         csv = read.csv(input$datafile$datapath),
-         rds = readRDS(input$datafile$datapath),
-         sav = read.spss(input$datafile$datapath, to.data.frame = TRUE),
-         {
-           showNotification("Invalid file; Please upload a .csv, .rds, or .sav file", type = "error")
-           validate("Invalid file; Please upload a .csv, .rds, or .sav file")
-         }
-  )
-  # Convert character columns to factors for consistency
-  df <- df %>% mutate(across(where(is.character), as.factor))
-  return(df)
-})
+  # Replace the entire dataInput reactive with this
+  dataInput <- reactive({
+    df <- readRDS("data/df.rds")
+    # Convert character columns to factors for consistency
+    df <- df %>% mutate(across(where(is.character), as.factor))
+    return(df)
+  })
 
   # Observe when dataInput() changes and update selectInput choices
   observeEvent(dataInput(), {
@@ -271,11 +261,21 @@ plotBuilderServer <- function(id) {
           'wrangled_data <- data_to_use %%>%%\n  filter(!is.na(%s)) %%>%%\n  filter(!is.na(%s))',
           input$xVar, y_var_for_calculation
         )
-        
+
         if (input$fillVar != "None") {
           wrangle_code <- paste0(wrangle_code, sprintf(' %%>%%\n  filter(!is.na(%s))', input$fillVar))
         }
-        
+
+        # Create grouping variables including facet if present
+        group_vars_code <- input$xVar
+        if (input$fillVar != "None") {
+          group_vars_code <- paste(group_vars_code, input$fillVar, sep = ", ")
+        }
+        if (input$facetVar != "None") {
+          wrangle_code <- paste0(wrangle_code, sprintf(' %%>%%\n  filter(!is.na(%s))', input$facetVar))
+          group_vars_code <- paste(group_vars_code, input$facetVar, sep = ", ")
+        }
+
         wrangle_code <- paste0(
           wrangle_code,
           sprintf(
@@ -315,7 +315,8 @@ plotBuilderServer <- function(id) {
         )
         
         if (input$facetVar != "None") {
-          p <- p + facet_wrap(vars(.data[[input$facetVar]]))
+          facet_formula <- as.formula(paste("~", input$facetVar))
+          p <- p + facet_wrap(facet_formula)
           plot_code <- paste0(plot_code, sprintf(' +\n  facet_wrap(~%s)', input$facetVar))
         }
         
