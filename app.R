@@ -82,7 +82,12 @@ navbarPage(
       "Enjeux",
       icon = icon("comments"),
       div(class = "animate-fade-in",
-        # Add your Issues content here
+        div(class = "construction-container",
+          tags$i(class = "fas fa-hard-hat construction-icon"),
+          div(class = "construction-text",
+            "Section\nen\nconstruction"
+          )
+        )
       )
     ),
     
@@ -91,7 +96,12 @@ navbarPage(
       "Lifestyles",
       icon = icon("heart"),
       div(class = "animate-fade-in",
-        # Add your Lifestyles content here
+        div(class = "construction-container",
+          tags$i(class = "fas fa-hard-hat construction-icon"),
+          div(class = "construction-text",
+            "Section\nen\nconstruction"
+          )
+        )
       )
     ),
     
@@ -100,7 +110,12 @@ navbarPage(
       "Partis",
       icon = icon("flag"),
       div(class = "animate-fade-in",
-        # Add your Parties content here
+        div(class = "construction-container",
+          tags$i(class = "fas fa-hard-hat construction-icon"),
+          div(class = "construction-text",
+            "Section\nen\nconstruction"
+          )
+        )
       )
     ),
     
@@ -109,10 +124,14 @@ navbarPage(
       "Circonscriptions",
       icon = icon("map-marker-alt"),
       div(class = "animate-fade-in",
-        # Add your Ridings content here
+        div(class = "construction-container",
+          tags$i(class = "fas fa-hard-hat construction-icon"),
+          div(class = "construction-text",
+            "Section\nen\nconstruction"
+          )
+        )
       )
-    ),
-    
+    ),    
     # Plot Builder Tab
     tabPanel(
       "Constructeur de graphiques",
