@@ -1,9 +1,9 @@
 Liste des fonctionalités:
 
 - [x] Charger des données 
-    - [ ] .sav
-    - [ ] .csv
-    - [ ] .rds
+    - [x] .sav
+    - [x] .csv
+    - [x] .rds
 
 - [x] sélection des variables
 
@@ -13,13 +13,12 @@ Liste des fonctionalités:
     - [ ] Utiliser weighted mean au lieu de mean()
 
 - [ ] visualisation des données
-    - [ ] barplot
+    - [x] barplot
         - [x] fill
         - [x] coord_flip
-    - [ ] scatterplot
+    - [x] scatterplot
     - [ ] map
     - [x] theme datagotchi
-    - [ ] Mettre que si le user a pas clessnize::datagotchi_theme_light(), utilise theme_minimal()
     - [ ] Ajouter le pourcentage sur le top des barplots
     
 - [ ] Peaufiner le graphique
