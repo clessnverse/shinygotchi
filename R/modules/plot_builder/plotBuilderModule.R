@@ -4,6 +4,8 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 
+source("R/utils/viz.R")
+
 # Module UI
 plotBuilderUI <- function(id) {
   ns <- NS(id)
@@ -300,7 +302,7 @@ plotBuilderServer <- function(id) {
             position = position_dodge(preserve = "single", width = 0.9),
             width = 0.8
           ) +
-          clessnize::theme_datagotchi_light() +
+          theme_datagotchi_light() +
           labs(x = input$xVar, 
                y = if (input$operation == "mean") paste("Mean", input$yVar) else paste("Proportion", input$yVar),
                fill = input$fillVar)
@@ -414,6 +416,12 @@ plotBuilderServer <- function(id) {
         )
       }
     )
+
+
+    # In plotBuilderModule.R server function
+    custom_theme <- reactive({
+      create_custom_theme(text_size())
+    })
    
   })
 }

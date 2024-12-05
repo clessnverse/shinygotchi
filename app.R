@@ -1,9 +1,3 @@
-if (!require(clessnize)) {
-    remotes::install_github("clessnverse/clessnize")
-    library(clessnize)
-}
-
-# app.R
 # Load required packages
 library(shiny)
 library(ggplot2)
@@ -19,6 +13,9 @@ library(bslib)
 library(fontawesome)
 
 # Source modules
+source("R/utils/viz.R")
+source("R/utils/themes.R")
+font_init()
 source("R/modules/plot_builder/plotBuilderModule.R")
 source("R/modules/groups/groupsModule.R")
 

@@ -1,3 +1,5 @@
+source("R/utils/viz.R")
+
 # UI Module
 socialGroupsUI <- function(id) {
   ns <- NS(id)
@@ -76,6 +78,7 @@ socialGroupsUI <- function(id) {
 # Server Module
 socialGroupsServer <- function(id, data) {
   moduleServer(id, function(input, output, session) {
+
     
     # Reactive value for text size
     text_size <- reactiveVal(24)  # Default text size
@@ -146,7 +149,7 @@ socialGroupsServer <- function(id, data) {
     
     # Function to apply the custom theme with dynamic text size
     custom_theme <- reactive({
-      clessnize::theme_datagotchi_light(base_size = text_size())
+      theme_datagotchi_light(base_size = text_size())
     })
 
     # Définir les mappings pour chaque variable
@@ -326,7 +329,7 @@ socialGroupsServer <- function(id, data) {
                         y = proportion, 
                         fill = dv_vote_choice)) +
           geom_bar(stat = "identity", position = "dodge") +
-          clessnize::theme_datagotchi_light(base_size = text_size()) +
+          theme_datagotchi_light(base_size = text_size()) +
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
                 axis.text.y = element_text(size = text_size()),
                 legend.text = element_text(size = text_size()),
@@ -414,7 +417,7 @@ df_social_groups <- apply_mapping(df_social_groups, input$social_var)
                             y = turnout_rate)) +
       geom_bar(stat = "identity", width = 0.5, fill = "tomato") +
       coord_flip() +
-      clessnize::theme_datagotchi_light(base_size = text_size()) +
+      theme_datagotchi_light(base_size = text_size()) +
       theme(axis.text.x = element_text(size = text_size()),
             axis.text.y = element_text(size = text_size()),
             plot.title = element_text(size = text_size() + 2),
@@ -508,7 +511,7 @@ output$download_plot_left_vs_right <- downloadHandler(
       geom_point(size = 3, color = "black") +
       geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
       coord_flip() +
-      clessnize::theme_datagotchi_light(base_size = text_size()) +
+      theme_datagotchi_light(base_size = text_size()) +
       theme(axis.text.x = element_text(size = text_size()),
             axis.text.y = element_text(size = text_size()),
             plot.title = element_text(size = text_size() + 2),
@@ -787,6 +790,10 @@ output$download_plot_left_vs_right <- downloadHandler(
         ggsave(file, plot = p, width = 16, height = 9, units = "in")
       }
     )
+    # In groupsModule.R server function
+    custom_theme <- reactive({
+      create_custom_theme(text_size())
+    })
     
   }) 
 }
