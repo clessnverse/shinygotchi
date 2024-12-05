@@ -1,3 +1,8 @@
+if (!require(clessnize)) {
+    remotes::install_github("clessnverse/clessnize")
+    library(clessnize)
+}
+
 # app.R
 # Load required packages
 library(shiny)
