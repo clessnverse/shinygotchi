@@ -28,15 +28,6 @@ socialGroupsUI <- function(id) {
           h4("Ajuster la taille du texte."),
           actionButton(ns("decrease_text_size"), "-"),
           actionButton(ns("increase_text_size"), "+")
-        ),
-        div(
-          class = "sidebar-partners",
-          style = "flex: 1; display: flex; flex-direction: column; justify-content: flex-end;",
-          tags$img(
-            src = "datagotchi_partners.png",
-            class = "corner-image",
-            alt = "Logos des partenaires"
-          )
         )
       ),
 
@@ -68,7 +59,7 @@ socialGroupsUI <- function(id) {
         )
       )
     )
-    ),
+    )
      # L'image à afficher
      
   )

@@ -181,74 +181,21 @@ svg {
   margin: 0 auto;
 }
 
-// Partner logos styling in sidebar
-.groups-module-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-layout {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.well {
-  display: flex !important;
-  flex-direction: column;
-  height: 85vh !important;
-}
-
-.sidebar-content {
-  flex: 0 0 auto;
-}
-
-.corner-image {
+.partner-image-container {
+  position: relative;
   width: 100%;
-  max-width: 100%;
-  margin-top: auto;
-  padding: 1rem;
-  display: block;
+  height: calc(100vh - 70px); // Ajustez '70px' à la hauteur réelle de votre navbar si nécessaire
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-// Ensure the sidebar panel stretches
-.col-sm-4 {
-  height: 100%;
-}
-
-// Make sure the main content area also stretches appropriately
-.col-sm-8 {
-  height: 100%;
-}
-
-// Partner logos styling in sidebar
-.sidebar-partners {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;  // Changed from flex-end to center
-  margin-top: 2rem;        // Reduced from previous value
-  padding: 1rem;
-}
-
-.corner-image {
+.partner-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 100%;
-  height: auto;
-  display: block;
-  object-fit: contain;
-  margin-bottom: 7rem;    // Added margin at the bottom
+  height: 100%;
+  object-fit: cover; // Utilisez 'contain' si vous préférez voir toute l'image sans rognage
 }
 
-.well {
-  display: flex !important;
-  flex-direction: column;
-  min-height: 70vh !important;  // Reduced from 85vh to 70vh
-  padding-bottom: 1rem;        // Reduced padding
-}
-
-.sidebar-content {
-  flex: 0 0 auto;
-  margin-bottom: 1rem;
-}
