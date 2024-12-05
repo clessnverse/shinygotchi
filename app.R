@@ -54,6 +54,7 @@ ui <- tagList(
   "))
 ),
   
+
 navbarPage(
   title = tagList(
     tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "70px"),
@@ -155,6 +156,15 @@ navbarPage(
           )
         ),
         plotBuilderUI("plot_builder")
+      )
+    ),
+     # Nouvel onglet "Partenaires"
+     tabPanel(
+      "Partenaires",
+      icon = icon("handshake"),
+      div(
+        class = "partner-image-container",
+        tags$img(src = "datagotchi_partners.png", alt = "Partenaire", class = "partner-image")
       )
     )
   )
