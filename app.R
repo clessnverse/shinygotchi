@@ -51,8 +51,11 @@ ui <- tagList(
   
 navbarPage(
   title = tagList(
-    tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "30px"),
-    span("Explorateur de données")
+    tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "70px"),
+    span(
+      HTML("Explorateur de données<br/>Léger x Datagotchi"),
+      style = "display: inline-block; text-align: center;"
+    )    
   ),
     theme = my_theme,
     id = "nav",

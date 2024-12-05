@@ -53,8 +53,8 @@
 
 // Title box
 .title-box {
-  background: white;
-  color: black;
+  background: black;
+  color: whitesmoke;
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
@@ -238,7 +238,7 @@ svg {
   height: auto;
   display: block;
   object-fit: contain;
-  margin-bottom: 2rem;    // Added margin at the bottom
+  margin-bottom: 7rem;    // Added margin at the bottom
 }
 
 .well {
