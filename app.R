@@ -34,11 +34,11 @@ my_theme <- bs_theme(
 
 # UI Definition
 ui <- tagList(
-  useWaiter(),  # Loading screen
+  useWaiter(), # Loading screen
   useShinyjs(),
   tags$head(
-  tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"),
-  tags$style(HTML("
+    tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"),
+    tags$style(HTML("
     @font-face {
       font-family: 'PixelOperatorSC';
       src: url('PixelOperatorSC.ttf') format('truetype');
@@ -49,20 +49,18 @@ ui <- tagList(
       font-family: 'PixelOperatorSC', monospace !important;
     }
   "))
-),
-  
-
-navbarPage(
-  title = tagList(
-    tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "70px"),
-    span(
-      HTML("Explorateur de données<br/>Léger x Datagotchi"),
-      style = "display: inline-block; text-align: center;"
-    )    
   ),
+  navbarPage(
+    title = tagList(
+      tags$img(src = "https://raw.githubusercontent.com/clessnverse/shinygotchi/refs/heads/main/www/datagotchi.png", height = "70px"),
+      span(
+        HTML("Explorateur de données<br/>Léger x Datagotchi"),
+        style = "display: inline-block; text-align: center;"
+      )
+    ),
     theme = my_theme,
     id = "nav",
-    
+
     # Groups Tab
     tabPanel(
       "Groupes sociaux",
@@ -82,60 +80,74 @@ navbarPage(
         socialGroupsUI("social_explorer")
       )
     ),
-    
     tabPanel(
       "Enjeux",
-      icon = icon("comments"), div(class = "animate-fade-in construction-container",
-          div(class = "construction-content",
-              tags$img(src = "construction-worker.gif", 
-                      class = "construction-gif",
-                      alt = "Construction worker with jackhammer"),
-              h2("Section en Construction", class = "construction-title")
-          )
+      icon = icon("comments"), div(
+        class = "animate-fade-in construction-container",
+        div(
+          class = "construction-content",
+          tags$img(
+            src = "construction-worker.gif",
+            class = "construction-gif",
+            alt = "Construction worker with jackhammer"
+          ),
+          h2("Section en Construction", class = "construction-title")
+        )
       )
-    ),    
+    ),
     # Lifestyles Tab
     tabPanel(
       "Lifestyles",
       icon = icon("heart"),
-      div(class = "animate-fade-in construction-container",
-          div(class = "construction-content",
-              tags$img(src = "construction-worker.gif", 
-                      class = "construction-gif",
-                      alt = "Construction worker with jackhammer"),
-              h2("Section en Construction", class = "construction-title")
-          )
+      div(
+        class = "animate-fade-in construction-container",
+        div(
+          class = "construction-content",
+          tags$img(
+            src = "construction-worker.gif",
+            class = "construction-gif",
+            alt = "Construction worker with jackhammer"
+          ),
+          h2("Section en Construction", class = "construction-title")
+        )
       )
-
     ),
-    
+
     # Parties Tab
     tabPanel(
       "Partis",
       icon = icon("flag"),
-      div(class = "animate-fade-in construction-container",
-          div(class = "construction-content",
-              tags$img(src = "construction-worker.gif", 
-                      class = "construction-gif",
-                      alt = "Construction worker with jackhammer"),
-              h2("Section en Construction", class = "construction-title")
-          )
+      div(
+        class = "animate-fade-in construction-container",
+        div(
+          class = "construction-content",
+          tags$img(
+            src = "construction-worker.gif",
+            class = "construction-gif",
+            alt = "Construction worker with jackhammer"
+          ),
+          h2("Section en Construction", class = "construction-title")
+        )
       )
     ),
-    
+
     # Ridings Tab
     tabPanel(
       "Circonscriptions",
       icon = icon("map-marker-alt"),
-      div(class = "animate-fade-in construction-container",
-          div(class = "construction-content",
-              tags$img(src = "construction-worker.gif", 
-                      class = "construction-gif",
-                      alt = "Construction worker with jackhammer"),
-              h2("Section en Construction", class = "construction-title")
-          )
+      div(
+        class = "animate-fade-in construction-container",
+        div(
+          class = "construction-content",
+          tags$img(
+            src = "construction-worker.gif",
+            class = "construction-gif",
+            alt = "Construction worker with jackhammer"
+          ),
+          h2("Section en Construction", class = "construction-title")
+        )
       )
-    ),    
+    ),
     # Plot Builder Tab
     tabPanel(
       "Constructeur de graphiques",
@@ -155,8 +167,8 @@ navbarPage(
         plotBuilderUI("plot_builder")
       )
     ),
-     # Nouvel onglet "Partenaires"
-     tabPanel(
+    # Nouvel onglet "Partenaires"
+    tabPanel(
       "Partenaires",
       icon = icon("handshake"),
       div(
@@ -177,15 +189,15 @@ server <- function(input, output, session) {
     ),
     color = "#ffffff"
   )
-  
+
   # Initialize modules
   plotBuilderServer("plot_builder")
   socialGroupsServer("social_explorer", data)
-  
+
   # Hide loading screen after delay
-  Sys.sleep(1)  # Simulate loading time
+  Sys.sleep(1) # Simulate loading time
   waiter_hide()
-  
+
   # Add tab switching animation
   observeEvent(input$nav, {
     shinyjs::runjs('
