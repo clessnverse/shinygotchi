@@ -31,7 +31,7 @@ socialGroupsUI <- function(id) {
           hr(),
           numericInput(ns("export_width"), "Largeur (en pouces) pour l'export PNG:", value = 12, min = 4, max = 30),
           numericInput(ns("export_height"), "Hauteur (en pouces) pour l'export PNG:", value = 7, min = 4, max = 30),
-          numericInput(ns("export_text_size"), "Taille de texte (points) pour l'export PNG:", value = 26, min = 8, max = 72)
+          numericInput(ns("export_text_size"), "Taille de texte (points) pour l'export PNG:", value = 60, min = 8, max = 150)
         )
       ),
 
@@ -299,56 +299,104 @@ socialGroupsServer <- function(id, data) {
       print(p)
     })
     
-    output$download_plot_vote_choice <- downloadHandler(
-      filename = function() {
-        paste("plot_vote_choice", Sys.Date(), ".png", sep = "")
-      },
-      content = function(file) {
-        
-        # 1) Refaire le code de construction du plot :
-        valid_parties <- names(canadian_party_colors)
-        df_social_groups$dv_vote_choice[!(df_social_groups$dv_vote_choice %in% valid_parties)] <- "other"
-        df_social_groups <- apply_mapping(df_social_groups, input$social_var)
-        
-        data <- df_social_groups %>%
-          filter(!is.na(.data[[input$social_var]]), !is.na(dv_vote_choice)) %>%
-          group_by(!!sym(input$social_var), dv_vote_choice) %>%
-          summarise(count = n(), .groups = 'drop') %>%
-          group_by(!!sym(input$social_var)) %>%
-          mutate(proportion = count / sum(count)) %>%
-          ungroup()
-        
-        # 2) Construire le plot avec la TAILLE de texte pour export :
-        export_plot <- ggplot(data, aes(x = !!sym(input$social_var), y = proportion, fill = dv_vote_choice)) +
-          geom_bar(stat = "identity", position = "dodge") +
-          # Au lieu de text_size(), on utilise la valeur entrée par l'utilisateur
-          theme_datagotchi_light(base_size = input$export_text_size) +
-          theme(
-            axis.text.x = element_text(angle = 45, hjust = 1, size = input$export_text_size),
-            axis.text.y = element_text(size = input$export_text_size),
-            legend.text = element_text(size = input$export_text_size),
-            legend.title = element_text(size = input$export_text_size),
-            plot.title = element_text(size = input$export_text_size + 2),
-            axis.title = element_text(size = input$export_text_size)
-          ) +
-          labs(
-            title = "Vote Choice by Social Group",
-            x = "Social Group",
-            y = "Proportion",
-            fill = "Vote Choice"
-          ) +
-          scale_y_continuous(labels = scales::percent) +
-          scale_fill_manual(values = canadian_party_colors)
-        
-        # 3) Appeler ggsave en utilisant LA LARGEUR/HAUTEUR choisies
-        ggsave(filename = file,
-               plot = export_plot,
-               width = input$export_width,     # pris dans numericInput(ns("export_width"))
-               height = input$export_height,   # pris dans numericInput(ns("export_height"))
-               units = "in",
-               dpi = 300)  # par ex. 300 dpi
-      }
+
+
+output$download_plot_vote_choice <- downloadHandler(
+  filename = function() {
+    paste("plot_vote_choice", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    
+    # --------------------------------------------------------------------
+    # (1) Créer et sauvegarder le ggplot dans un FICHIER TEMPORAIRE
+    # --------------------------------------------------------------------
+    # 1.1 Construire votre ggplot comme d'habitude
+    valid_parties <- names(canadian_party_colors)
+    df_social_groups$dv_vote_choice[!(df_social_groups$dv_vote_choice %in% valid_parties)] <- "other"
+    df_social_groups <- apply_mapping(df_social_groups, input$social_var)
+    
+    data <- df_social_groups %>%
+      filter(!is.na(.data[[input$social_var]]), !is.na(dv_vote_choice)) %>%
+      group_by(!!sym(input$social_var), dv_vote_choice) %>%
+      summarise(count = n(), .groups = 'drop') %>%
+      group_by(!!sym(input$social_var)) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+    
+    export_plot <- ggplot(data, aes(x = !!sym(input$social_var), y = proportion, fill = dv_vote_choice)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      # Ici, vous pouvez ajuster la taille du texte "à l'export", ou le faire plus haut
+      theme_datagotchi_light(base_size = input$export_text_size) +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+        axis.text.y = element_text(size = input$export_text_size),
+        legend.text = element_text(size = input$export_text_size),
+        legend.title = element_text(size = input$export_text_size),
+        plot.title = element_text(size = input$export_text_size + 2),
+        axis.title = element_text(size = input$export_text_size)
+      ) +
+      labs(
+        title = "Choix de vote par groupe social",
+        x = "Groupe social",
+        y = "Proportion",
+        fill = "Choix de vote"
+      ) +
+      scale_y_continuous(labels = scales::percent) +
+      scale_fill_manual(values = canadian_party_colors)
+    
+    # 1.2 Sauvegarder ce ggplot dans un fichier temporaire
+    tmp_file <- tempfile(fileext = ".png")
+    ggsave(
+      filename = tmp_file,
+      plot = export_plot,
+      width = input$export_width,   # inch
+      height = input$export_height, # inch
+      units = "in",
+      dpi = 300
     )
+    
+    # --------------------------------------------------------------------
+    # (2) Charger l'image principale ET le logo
+    # --------------------------------------------------------------------
+    main_img <- readPNG(tmp_file)
+    logo_img <- readPNG("www/Logo.PNG")  # à adapter si nécessaire
+    
+    # --------------------------------------------------------------------
+    # (3) Créer l'appareil graphique final
+    # --------------------------------------------------------------------
+    # On va écrire directement dans 'file' (celui du downloadHandler)
+    png(filename = file,
+        width = input$export_width * 100,    # en pixels
+        height = input$export_height * 100,  # en pixels
+        res = 100  # ou 300 si vous voulez plus de résolution
+    )
+    
+    # --------------------------------------------------------------------
+    # (4) Afficher le graphique principal
+    # --------------------------------------------------------------------
+    grid.raster(main_img, width = unit(1, "npc"), height = unit(1, "npc"))
+    # => Remplit tout le device
+    
+    # --------------------------------------------------------------------
+    # (5) Superposer le logo
+    # --------------------------------------------------------------------
+    # Adaptez x, y pour la position, et width, height pour la taille du logo
+    # x=0.92, y=0.06 => coin inférieur droit (approx)
+    grid.raster(
+      logo_img, 
+      x = 0.95,             # position horizontale [0 = gauche, 1 = droite]
+      y = 0.05,             # position verticale   [0 = bas,    1 = haut]
+      width = unit(0.87, "inches"),  # taille du logo en inches
+      height= unit(0.4, "inches")   # ajustez selon ratio
+    )
+    
+    # --------------------------------------------------------------------
+    # (6) Fermer l'appareil graphique
+    # --------------------------------------------------------------------
+    dev.off()
+  }
+)
+
     
     ### Plot: Turnout ###
 output$plot_turnout <- renderPlot({
@@ -400,7 +448,9 @@ output$download_plot_turnout <- downloadHandler(
   },
   content = function(file) {
     
-    # 1) Reconstruire le code de construction du plot
+    # --------------------------------------------------------------------
+    # (1) Créer et sauvegarder le ggplot dans un fichier temporaire
+    # --------------------------------------------------------------------
     df_social_groups <- apply_mapping(df_social_groups, input$social_var)
     
     if (!"dv_turnout_binary" %in% names(df_social_groups)) {
@@ -416,7 +466,6 @@ output$download_plot_turnout <- downloadHandler(
         .groups = 'drop'
       )
     
-    # 2) Construire le plot pour l'export
     export_plot <- ggplot(plot_data_turnout, aes(x = !!sym(input$social_var), y = turnout_rate)) +
       geom_bar(stat = "identity", width = 0.4, fill = "tomato") +
       coord_flip() +
@@ -434,16 +483,53 @@ output$download_plot_turnout <- downloadHandler(
         y = "Taux de participation électorale (%)"
       ) +
       scale_y_continuous(labels = scales::percent)
-
-    # 3) Enregistrer avec ggsave
+    
+    # 1.2 Sauvegarde temporaire
+    tmp_file <- tempfile(fileext = ".png")
     ggsave(
-      filename = file,
+      filename = tmp_file,
       plot = export_plot,
-      width = input$export_width,
+      width  = input$export_width,
       height = input$export_height,
-      units = "in",
-      dpi = 300
+      units  = "in",
+      dpi    = 300
     )
+    
+    # --------------------------------------------------------------------
+    # (2) Charger l'image principale ET le logo
+    # --------------------------------------------------------------------
+    main_img <- readPNG(tmp_file)
+    logo_img <- readPNG("www/Logo.PNG")
+    
+    # --------------------------------------------------------------------
+    # (3) Créer l'appareil graphique final
+    # --------------------------------------------------------------------
+    png(filename = file,
+        width  = input$export_width * 100,
+        height = input$export_height * 100,
+        res    = 100
+    )
+    
+    # --------------------------------------------------------------------
+    # (4) Afficher le graphique principal
+    # --------------------------------------------------------------------
+    grid.raster(main_img, width = unit(1, "npc"), height = unit(1, "npc"))
+    
+    # --------------------------------------------------------------------
+    # (5) Superposer le logo
+    # --------------------------------------------------------------------
+    grid.raster(
+      logo_img, 
+      x = 0.95,  
+      y = 0.05,  
+      width  = unit(0.87, "inches"), 
+      height = unit(0.4, "inches")
+    )
+    
+    # --------------------------------------------------------------------
+    # (6) Fermer l'appareil graphique
+    # --------------------------------------------------------------------
+    dev.off()
   }
 )
 
@@ -498,8 +584,11 @@ output$download_plot_left_vs_right <- downloadHandler(
   },
   content = function(file) {
     
-    # 1) Reconstruire le code de construction du plot
+    # --------------------------------------------------------------------
+    # (1) Créer et sauvegarder le ggplot dans un fichier temporaire
+    # --------------------------------------------------------------------
     df_social_groups <- apply_mapping(df_social_groups, input$social_var)
+    
     if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
       return(NULL)
     }
@@ -515,7 +604,6 @@ output$download_plot_left_vs_right <- downloadHandler(
         .groups = 'drop'
       )
     
-    # 2) Construire le plot pour l'export
     export_plot <- ggplot(plot_data_left_right, aes(x = !!sym(input$social_var), y = mean_left_right)) +
       geom_point(size = 3, color = "black") +
       geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
@@ -538,17 +626,55 @@ output$download_plot_left_vs_right <- downloadHandler(
         labels = c("Gauche", "Centre", "Droite")
       )
     
-    # 3) Enregistrer avec ggsave
+    # 1.2 Sauvegarde temporaire
+    tmp_file <- tempfile(fileext = ".png")
     ggsave(
-      filename = file,
+      filename = tmp_file,
       plot = export_plot,
-      width = input$export_width,
+      width  = input$export_width,
       height = input$export_height,
-      units = "in",
-      dpi = 300
+      units  = "in",
+      dpi    = 300
     )
+    
+    # --------------------------------------------------------------------
+    # (2) Charger l'image principale + logo
+    # --------------------------------------------------------------------
+    main_img <- readPNG(tmp_file)
+    logo_img <- readPNG("www/Logo.PNG")
+    
+    # --------------------------------------------------------------------
+    # (3) Créer l'appareil graphique final
+    # --------------------------------------------------------------------
+    png(filename = file,
+        width  = input$export_width * 100,
+        height = input$export_height * 100,
+        res    = 100
+    )
+    
+    # --------------------------------------------------------------------
+    # (4) Afficher le graphique principal
+    # --------------------------------------------------------------------
+    grid.raster(main_img, width = unit(1, "npc"), height = unit(1, "npc"))
+    
+    # --------------------------------------------------------------------
+    # (5) Superposer le logo
+    # --------------------------------------------------------------------
+    grid.raster(
+      logo_img, 
+      x = 0.95,
+      y = 0.05,
+      width  = unit(0.87, "inches"), 
+      height = unit(0.4, "inches")
+    )
+    
+    # --------------------------------------------------------------------
+    # (6) Fermer l'appareil graphique
+    # --------------------------------------------------------------------
+    dev.off()
   }
 )
+
 
 
     
@@ -630,15 +756,19 @@ output$download_plot_left_vs_right <- downloadHandler(
       },
       content = function(file) {
         
-        # 1) Reconstruire les données
+        # --------------------------------------------------------------------
+        # (1) Créer et sauvegarder le ggplot dans un fichier temporaire
+        # --------------------------------------------------------------------
         df_social_groups <- apply_mapping(df_social_groups, input$social_var)
         
         if (!all(c("lifestyle_manual_task_freq_numeric", "lifestyle_performing_arts_freq_numeric") %in% names(df_social_groups))) {
           return(NULL)
         }
         
-        df_social_groups$lifestyle_manual_task_freq_numeric <- as.numeric(df_social_groups$lifestyle_manual_task_freq_numeric)
-        df_social_groups$lifestyle_performing_arts_freq_numeric <- as.numeric(df_social_groups$lifestyle_performing_arts_freq_numeric)
+        df_social_groups$lifestyle_manual_task_freq_numeric <-
+          as.numeric(df_social_groups$lifestyle_manual_task_freq_numeric)
+        df_social_groups$lifestyle_performing_arts_freq_numeric <-
+          as.numeric(df_social_groups$lifestyle_performing_arts_freq_numeric)
         
         plot_data_manual_art <- df_social_groups %>%
           filter(!is.na(.data[[input$social_var]])) %>%
@@ -649,19 +779,15 @@ output$download_plot_left_vs_right <- downloadHandler(
             .groups = 'drop'
           ) %>%
           mutate(
-            Art = -Art  # On inverse pour mettre Art en négatif
+            Art = -Art  # Inverse la valeur pour Art
           ) %>%
           tidyr::pivot_longer(
-            cols = c("Manual_Tasks", "Art"), 
-            names_to = "Activity", 
+            cols = c("Manual_Tasks", "Art"),
+            names_to = "Activity",
             values_to = "Mean_Frequency"
           )
         
-        # 2) Construire le plot pour l'export
-        export_plot <- ggplot(
-          plot_data_manual_art, 
-          aes(x = !!sym(input$social_var), y = Mean_Frequency, fill = Activity)
-        ) +
+        export_plot <- ggplot(plot_data_manual_art, aes(x = !!sym(input$social_var), y = Mean_Frequency, fill = Activity)) +
           geom_bar(stat = "identity", position = "identity") +
           geom_hline(yintercept = 0, color = "black") +
           theme_datagotchi_light(base_size = input$export_text_size) +
@@ -686,17 +812,55 @@ output$download_plot_left_vs_right <- downloadHandler(
           scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato")) +
           coord_flip()
         
-        # 3) Enregistrer avec ggsave
+        # 1.2 Sauvegarde temporaire
+        tmp_file <- tempfile(fileext = ".png")
         ggsave(
-          filename = file,
+          filename = tmp_file,
           plot = export_plot,
-          width = input$export_width,
+          width  = input$export_width,
           height = input$export_height,
-          units = "in",
-          dpi = 300
+          units  = "in",
+          dpi    = 300
         )
+        
+        # --------------------------------------------------------------------
+        # (2) Charger l'image principale + logo
+        # --------------------------------------------------------------------
+        main_img <- readPNG(tmp_file)
+        logo_img <- readPNG("www/Logo.PNG")
+        
+        # --------------------------------------------------------------------
+        # (3) Créer l'appareil graphique final
+        # --------------------------------------------------------------------
+        png(filename = file,
+            width  = input$export_width * 100,
+            height = input$export_height * 100,
+            res    = 100
+        )
+        
+        # --------------------------------------------------------------------
+        # (4) Afficher le graphique principal
+        # --------------------------------------------------------------------
+        grid.raster(main_img, width = unit(1, "npc"), height = unit(1, "npc"))
+        
+        # --------------------------------------------------------------------
+        # (5) Superposer le logo
+        # --------------------------------------------------------------------
+        grid.raster(
+          logo_img, 
+          x = 0.95,
+          y = 0.05,
+          width  = unit(0.87, "inches"), 
+          height = unit(0.4, "inches")
+        )
+        
+        # --------------------------------------------------------------------
+        # (6) Fermer l'appareil graphique
+        # --------------------------------------------------------------------
+        dev.off()
       }
     )
+    
     
     
     ### Plot: Hunting ###
@@ -727,22 +891,23 @@ output$download_plot_left_vs_right <- downloadHandler(
       },
       content = function(file) {
         
-        # 1) Reconstruire les données
+        # --------------------------------------------------------------------
+        # (1) Créer et sauvegarder le ggplot dans un fichier temporaire
+        # --------------------------------------------------------------------
         df_social_groups <- apply_mapping(df_social_groups, input$social_var)
         df_hunting <- df_social_groups %>%
           filter(!is.na(.data[[input$social_var]]), !is.na(lifestyle_hunting_freq_numeric)) %>%
           group_by(!!sym(input$social_var)) %>%
           summarise(mean_hunting_freq = mean(lifestyle_hunting_freq_numeric, na.rm = TRUE))
         
-        # 2) Construire le plot pour l'export
         export_plot <- ggplot(df_hunting, aes(x = !!sym(input$social_var), y = mean_hunting_freq)) +
           geom_bar(stat = "identity", fill = "darkorange") +
           theme_datagotchi_light(base_size = input$export_text_size) +
           theme(
-            axis.text.x  = element_text(angle = 45, hjust = 1, size = input$export_text_size),
-            axis.text.y  = element_text(size = input$export_text_size),
-            plot.title   = element_text(size = input$export_text_size + 2),
-            axis.title   = element_text(size = input$export_text_size)
+            axis.text.x = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.text.y = element_text(size = input$export_text_size),
+            plot.title  = element_text(size = input$export_text_size + 2),
+            axis.title  = element_text(size = input$export_text_size)
           ) +
           labs(
             title = "Fréquence moyenne de la chasse par groupe social",
@@ -750,17 +915,55 @@ output$download_plot_left_vs_right <- downloadHandler(
             y = "Fréquence moyenne de la chasse"
           )
         
-        # 3) Enregistrer avec ggsave
+        # 1.2 Sauvegarde temporaire
+        tmp_file <- tempfile(fileext = ".png")
         ggsave(
-          filename = file,
+          filename = tmp_file,
           plot = export_plot,
-          width = input$export_width,
+          width  = input$export_width,
           height = input$export_height,
-          units = "in",
-          dpi = 300
+          units  = "in",
+          dpi    = 300
         )
+        
+        # --------------------------------------------------------------------
+        # (2) Charger l'image principale + logo
+        # --------------------------------------------------------------------
+        main_img <- readPNG(tmp_file)
+        logo_img <- readPNG("www/Logo.PNG")
+        
+        # --------------------------------------------------------------------
+        # (3) Créer l'appareil graphique final
+        # --------------------------------------------------------------------
+        png(filename = file,
+            width  = input$export_width * 100,
+            height = input$export_height * 100,
+            res    = 100
+        )
+        
+        # --------------------------------------------------------------------
+        # (4) Afficher le graphique principal
+        # --------------------------------------------------------------------
+        grid.raster(main_img, width = unit(1, "npc"), height = unit(1, "npc"))
+        
+        # --------------------------------------------------------------------
+        # (5) Superposer le logo
+        # --------------------------------------------------------------------
+        grid.raster(
+          logo_img, 
+          x = 0.95,
+          y = 0.05,
+          width  = unit(0.87, "inches"), 
+          height = unit(0.4, "inches")
+        )
+        
+        # --------------------------------------------------------------------
+        # (6) Fermer l'appareil graphique
+        # --------------------------------------------------------------------
+        dev.off()
       }
     )
+    
     
     
     ### Plot: Transport ###
@@ -802,7 +1005,9 @@ output$download_plot_left_vs_right <- downloadHandler(
       },
       content = function(file) {
         
-        # 1) Reconstruire le code de construction du plot
+        # --------------------------------------------------------------------
+        # (1) Créer et sauvegarder le ggplot dans un fichier temporaire
+        # --------------------------------------------------------------------
         df_social_groups <- apply_mapping(df_social_groups, input$social_var)
         data <- df_social_groups %>%
           filter(!is.na(.data[[input$social_var]]), !is.na(lifestyle_medsociaux_plus_frequent)) %>%
@@ -812,15 +1017,7 @@ output$download_plot_left_vs_right <- downloadHandler(
           mutate(proportion = count / sum(count)) %>%
           ungroup()
         
-        # 2) Construire le plot pour l'export
-        export_plot <- ggplot(
-          data, 
-          aes(
-            x = !!sym(input$social_var), 
-            y = proportion, 
-            fill = lifestyle_medsociaux_plus_frequent
-          )
-        ) +
+        export_plot <- ggplot(data, aes(x = !!sym(input$social_var), y = proportion, fill = lifestyle_medsociaux_plus_frequent)) +
           geom_bar(stat = "identity", position = "dodge") +
           theme_datagotchi_light(base_size = input$export_text_size) +
           theme(
@@ -832,25 +1029,63 @@ output$download_plot_left_vs_right <- downloadHandler(
             axis.title   = element_text(size = input$export_text_size)
           ) +
           labs(
-            title = "Most Frequent Social Media by Social Group",
-            x = "Social Group",
-            y = "Proportion",
-            fill = "Social Media"
+            title = "Réseaux sociaux les plus fréquentés par groupe social",
+            x = "Groupe social",
+            y = "Proportion (%)",
+            fill = "Réseau social"
           ) +
           scale_y_continuous(labels = scales::percent) +
           scale_fill_manual(values = sns_colors)
         
-        # 3) Enregistrer avec ggsave
+        # 1.2 Sauvegarde temporaire
+        tmp_file <- tempfile(fileext = ".png")
         ggsave(
-          filename = file,
+          filename = tmp_file,
           plot = export_plot,
-          width = input$export_width,
+          width  = input$export_width,
           height = input$export_height,
-          units = "in",
-          dpi = 300
+          units  = "in",
+          dpi    = 300
         )
+        
+        # --------------------------------------------------------------------
+        # (2) Charger l'image principale + logo
+        # --------------------------------------------------------------------
+        main_img <- readPNG(tmp_file)
+        logo_img <- readPNG("www/Logo.PNG")
+        
+        # --------------------------------------------------------------------
+        # (3) Créer l'appareil graphique final
+        # --------------------------------------------------------------------
+        png(filename = file,
+            width  = input$export_width * 100,
+            height = input$export_height * 100,
+            res    = 100
+        )
+        
+        # --------------------------------------------------------------------
+        # (4) Afficher le graphique principal
+        # --------------------------------------------------------------------
+        grid.raster(main_img, width = unit(1, "npc"), height = unit(1, "npc"))
+        
+        # --------------------------------------------------------------------
+        # (5) Superposer le logo
+        # --------------------------------------------------------------------
+        grid.raster(
+          logo_img, 
+          x = 0.95,
+          y = 0.05,
+          width  = unit(0.87, "inches"), 
+          height = unit(0.4, "inches")
+        )
+        
+        # --------------------------------------------------------------------
+        # (6) Fermer l'appareil graphique
+        # --------------------------------------------------------------------
+        dev.off()
       }
     )
+    
     
     # In groupsModule.R server function
     custom_theme <- reactive({

@@ -11,6 +11,8 @@ library(shinycssloaders)
 library(fresh)
 library(bslib)
 library(fontawesome)
+library(png)
+library(grid)
 
 # Source modules
 source("R/utils/viz.R")
