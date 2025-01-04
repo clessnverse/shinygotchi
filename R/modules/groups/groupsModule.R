@@ -362,8 +362,8 @@ output$plot_turnout <- renderPlot({
   
   # Create turnout bar plot with thin horizontal bars
   p_turnout <- ggplot(data = plot_data_turnout, 
-                      aes(x = reorder(!!sym(input$social_var), turnout_rate), 
-                          y = turnout_rate)) +
+                      aes(x = !!sym(input$social_var), turnout_rate), 
+                          y = turnout_rate) +
     geom_bar(stat = "identity", width = 0.4, fill = "tomato") +
     coord_flip() +
     custom_theme() +
@@ -404,8 +404,8 @@ df_social_groups <- apply_mapping(df_social_groups, input$social_var)
       )
     
     p_turnout <- ggplot(data = plot_data_turnout, 
-                        aes(x = reorder(!!sym(input$social_var), turnout_rate), 
-                            y = turnout_rate)) +
+                        aes(x = !!sym(input$social_var), turnout_rate), 
+                            y = turnout_rate) +
       geom_bar(stat = "identity", width = 0.5, fill = "tomato") +
       coord_flip() +
       theme_datagotchi_light(base_size = text_size()) +
@@ -448,8 +448,8 @@ output$plot_left_vs_right <- renderPlot({
     )
   
   p_left_right <- ggplot(data = plot_data_left_right, 
-                         aes(x = reorder(!!sym(input$social_var), mean_left_right), 
-                             y = mean_left_right)) +
+                         aes(x = !!sym(input$social_var), mean_left_right), 
+                             y = mean_left_right) +
     geom_point(size = 3, color = "black") +
     geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
     coord_flip() +
@@ -497,8 +497,8 @@ output$download_plot_left_vs_right <- downloadHandler(
       )
     
     p_left_right <- ggplot(data = plot_data_left_right, 
-                           aes(x = reorder(!!sym(input$social_var), mean_left_right), 
-                               y = mean_left_right)) +
+                           aes(x = !!sym(input$social_var), mean_left_right), 
+                               y = mean_left_right) +
       geom_point(size = 3, color = "black") +
       geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
       coord_flip() +
@@ -565,9 +565,9 @@ output$download_plot_left_vs_right <- downloadHandler(
       
       # Create the bar plot with zero in the middle
       p_manual_art <- ggplot(data = plot_data_manual_art, 
-                             aes(x = reorder(!!sym(input$social_var), Mean_Frequency), 
-                                 y = Mean_Frequency, 
-                                 fill = Activity)) +
+                              aes(x = !!sym(input$social_var), 
+                                  y = Mean_Frequency, 
+                                  fill = Activity)) +
         geom_bar(stat = "identity", position = "identity") +
         geom_hline(yintercept = 0, color = "black") +
         custom_theme() +
@@ -640,7 +640,7 @@ output$download_plot_left_vs_right <- downloadHandler(
  
  # Create the bar plot with zero in the middle
  p_manual_art <- ggplot(data = plot_data_manual_art, 
-                        aes(x = reorder(!!sym(input$social_var), Mean_Frequency), 
+                        aes(x = !!sym(input$social_var), 
                             y = Mean_Frequency, 
                             fill = Activity)) +
    geom_bar(stat = "identity", position = "identity") +
