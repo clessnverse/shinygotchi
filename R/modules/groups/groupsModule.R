@@ -25,9 +25,13 @@ socialGroupsUI <- function(id) {
             )
           ),
           hr(),
-          h4("Ajuster la taille du texte."),
+          h4("Ajuster la taille du texte"),
           actionButton(ns("decrease_text_size"), "-"),
-          actionButton(ns("increase_text_size"), "+")
+          actionButton(ns("increase_text_size"), "+"),
+          hr(),
+          numericInput(ns("export_width"), "Largeur (en pouces) pour l'export PNG:", value = 12, min = 4, max = 30),
+          numericInput(ns("export_height"), "Hauteur (en pouces) pour l'export PNG:", value = 7, min = 4, max = 30),
+          numericInput(ns("export_text_size"), "Taille de texte (points) pour l'export PNG:", value = 26, min = 8, max = 72)
         )
       ),
 
@@ -300,13 +304,12 @@ socialGroupsServer <- function(id, data) {
         paste("plot_vote_choice", Sys.Date(), ".png", sep = "")
       },
       content = function(file) {
-        # Duplicate the plotting code here
+        
+        # 1) Refaire le code de construction du plot :
         valid_parties <- names(canadian_party_colors)
         df_social_groups$dv_vote_choice[!(df_social_groups$dv_vote_choice %in% valid_parties)] <- "other"
-
-         # Appliquer le mapping à la variable sociale sélectionnée
- df_social_groups <- apply_mapping(df_social_groups, input$social_var)
-
+        df_social_groups <- apply_mapping(df_social_groups, input$social_var)
+        
         data <- df_social_groups %>%
           filter(!is.na(.data[[input$social_var]]), !is.na(dv_vote_choice)) %>%
           group_by(!!sym(input$social_var), dv_vote_choice) %>%
@@ -314,26 +317,36 @@ socialGroupsServer <- function(id, data) {
           group_by(!!sym(input$social_var)) %>%
           mutate(proportion = count / sum(count)) %>%
           ungroup()
-
-        p <- ggplot(data = data, 
-                    aes(x = !!sym(input$social_var), 
-                        y = proportion, 
-                        fill = dv_vote_choice)) +
+        
+        # 2) Construire le plot avec la TAILLE de texte pour export :
+        export_plot <- ggplot(data, aes(x = !!sym(input$social_var), y = proportion, fill = dv_vote_choice)) +
           geom_bar(stat = "identity", position = "dodge") +
-          theme_datagotchi_light(base_size = text_size()) +
-          theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
-                axis.text.y = element_text(size = text_size()),
-                legend.text = element_text(size = text_size()),
-                legend.title = element_text(size = text_size()),
-                plot.title = element_text(size = text_size() + 2),
-                axis.title = element_text(size = text_size())) +
-          labs(title = "Vote Choice by Social Group",
-               x = "Social Group",
-               y = "Proportion",
-               fill = "Vote Choice") +
+          # Au lieu de text_size(), on utilise la valeur entrée par l'utilisateur
+          theme_datagotchi_light(base_size = input$export_text_size) +
+          theme(
+            axis.text.x = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.text.y = element_text(size = input$export_text_size),
+            legend.text = element_text(size = input$export_text_size),
+            legend.title = element_text(size = input$export_text_size),
+            plot.title = element_text(size = input$export_text_size + 2),
+            axis.title = element_text(size = input$export_text_size)
+          ) +
+          labs(
+            title = "Vote Choice by Social Group",
+            x = "Social Group",
+            y = "Proportion",
+            fill = "Vote Choice"
+          ) +
           scale_y_continuous(labels = scales::percent) +
           scale_fill_manual(values = canadian_party_colors)
-        ggsave(file, plot = p, width = 16, height = 9, units = "in")
+        
+        # 3) Appeler ggsave en utilisant LA LARGEUR/HAUTEUR choisies
+        ggsave(filename = file,
+               plot = export_plot,
+               width = input$export_width,     # pris dans numericInput(ns("export_width"))
+               height = input$export_height,   # pris dans numericInput(ns("export_height"))
+               units = "in",
+               dpi = 300)  # par ex. 300 dpi
       }
     )
     
@@ -386,10 +399,10 @@ output$download_plot_turnout <- downloadHandler(
     paste("plot_turnout", Sys.Date(), ".png", sep = "")
   },
   content = function(file) {
-    # Duplicate the plotting code here
-# Appliquer le mapping à la variable sociale sélectionnée
-df_social_groups <- apply_mapping(df_social_groups, input$social_var)
-
+    
+    # 1) Reconstruire le code de construction du plot
+    df_social_groups <- apply_mapping(df_social_groups, input$social_var)
+    
     if (!"dv_turnout_binary" %in% names(df_social_groups)) {
       df_social_groups <- df_social_groups %>%
         mutate(dv_turnout_binary = ifelse(dv_turnout >= 0.5, "Yes", "No"))
@@ -403,23 +416,34 @@ df_social_groups <- apply_mapping(df_social_groups, input$social_var)
         .groups = 'drop'
       )
     
-    p_turnout <- ggplot(data = plot_data_turnout, 
-                        aes(x = !!sym(input$social_var), turnout_rate), 
-                            y = turnout_rate) +
-      geom_bar(stat = "identity", width = 0.5, fill = "tomato") +
+    # 2) Construire le plot pour l'export
+    export_plot <- ggplot(plot_data_turnout, aes(x = !!sym(input$social_var), y = turnout_rate)) +
+      geom_bar(stat = "identity", width = 0.4, fill = "tomato") +
       coord_flip() +
-      theme_datagotchi_light(base_size = text_size()) +
-      theme(axis.text.x = element_text(size = text_size()),
-            axis.text.y = element_text(size = text_size()),
-            plot.title = element_text(size = text_size() + 2),
-            axis.title = element_text(size = text_size()),
-            axis.ticks = element_blank()) +  # Optionnel : supprimer les graduations
-      labs(title = "Turnout by Social Group",
-           x = NULL,
-           y = "Turnout Rate (%)") +
+      theme_datagotchi_light(base_size = input$export_text_size) +
+      theme(
+        axis.text.x = element_text(size = input$export_text_size),
+        axis.text.y = element_text(size = input$export_text_size),
+        plot.title  = element_text(size = input$export_text_size + 2),
+        axis.title  = element_text(size = input$export_text_size),
+        axis.ticks  = element_blank()
+      ) +
+      labs(
+        title = "Participation électorale par groupe social",
+        x = NULL,
+        y = "Taux de participation électorale (%)"
+      ) +
       scale_y_continuous(labels = scales::percent)
-    
-    ggsave(file, plot = p_turnout, width = 16, height = 9, units = "in")
+
+    # 3) Enregistrer avec ggsave
+    ggsave(
+      filename = file,
+      plot = export_plot,
+      width = input$export_width,
+      height = input$export_height,
+      units = "in",
+      dpi = 300
+    )
   }
 )
 
@@ -473,17 +497,12 @@ output$download_plot_left_vs_right <- downloadHandler(
     paste("plot_left_vs_right", Sys.Date(), ".png", sep = "")
   },
   content = function(file) {
-    # Duplicate the plotting code here
-    req(input$social_var)
-    req(df_social_groups)
-
-            # Appliquer le mapping à la variable sociale sélectionnée
- df_social_groups <- apply_mapping(df_social_groups, input$social_var)
     
+    # 1) Reconstruire le code de construction du plot
+    df_social_groups <- apply_mapping(df_social_groups, input$social_var)
     if (!"dv_attitude_leftvsright" %in% names(df_social_groups)) {
       return(NULL)
     }
-    
     if (!is.numeric(df_social_groups$dv_attitude_leftvsright)) {
       return(NULL)
     }
@@ -496,26 +515,41 @@ output$download_plot_left_vs_right <- downloadHandler(
         .groups = 'drop'
       )
     
-    p_left_right <- ggplot(data = plot_data_left_right, 
-                           aes(x = !!sym(input$social_var), mean_left_right), 
-                               y = mean_left_right) +
+    # 2) Construire le plot pour l'export
+    export_plot <- ggplot(plot_data_left_right, aes(x = !!sym(input$social_var), y = mean_left_right)) +
       geom_point(size = 3, color = "black") +
       geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
       coord_flip() +
-      theme_datagotchi_light(base_size = text_size()) +
-      theme(axis.text.x = element_text(size = text_size()),
-            axis.text.y = element_text(size = text_size()),
-            plot.title = element_text(size = text_size() + 2),
-            axis.title = element_text(size = text_size())) +
-      labs(title = "Positionnement Gauche-Droite par Groupe Social",
-           x = NULL,
-           y = NULL) +
-      scale_y_continuous(limits = c(0, 1),
-                         breaks = c(0.25, 0.5, 0.75),
-                         labels = c("Gauche", "Centre", "Droite"))
-    ggsave(file, plot = p_left_right, width = 16, height = 9, units = "in")
+      theme_datagotchi_light(base_size = input$export_text_size) +
+      theme(
+        axis.text.x = element_text(size = input$export_text_size),
+        axis.text.y = element_text(size = input$export_text_size),
+        plot.title  = element_text(size = input$export_text_size + 2),
+        axis.title  = element_text(size = input$export_text_size)
+      ) +
+      labs(
+        title = "Positionnement Gauche-Droite par Groupe Social",
+        x = NULL,
+        y = NULL
+      ) +
+      scale_y_continuous(
+        limits = c(0, 1),
+        breaks = c(0.25, 0.5, 0.75),
+        labels = c("Gauche", "Centre", "Droite")
+      )
+    
+    # 3) Enregistrer avec ggsave
+    ggsave(
+      filename = file,
+      plot = export_plot,
+      width = input$export_width,
+      height = input$export_height,
+      units = "in",
+      dpi = 300
+    )
   }
 )
+
 
     
     ### Plot: Manual Tasks vs Art ###
@@ -595,75 +629,75 @@ output$download_plot_left_vs_right <- downloadHandler(
         paste("plot_manual_vs_art", Sys.Date(), ".png", sep = "")
       },
       content = function(file) {
-        # Duplicate the plotting code here
-        req(input$social_var)
-        req(df_social_groups)
         
-                     # Appliquer le mapping à la variable sociale sélectionnée
- df_social_groups <- apply_mapping(df_social_groups, input$social_var)
-      
- cat("Starting to create Manual Tasks vs Art plot for:", input$social_var, "\n")
- 
- # Verify that the variables exist and are numeric
- if (!all(c("lifestyle_manual_task_freq_numeric", "lifestyle_performing_arts_freq_numeric") %in% names(df_social_groups))) {
-   cat("Required variables not found in data.\n")
-   return(NULL)
- }
- 
- # Convert to numeric if necessary
- df_social_groups$lifestyle_manual_task_freq_numeric <- as.numeric(df_social_groups$lifestyle_manual_task_freq_numeric)
- df_social_groups$lifestyle_performing_arts_freq_numeric <- as.numeric(df_social_groups$lifestyle_performing_arts_freq_numeric)
- 
- # Calculate means by social group
- plot_data_manual_art <- tryCatch({
-   data <- df_social_groups %>%
-     filter(!is.na(.data[[input$social_var]])) %>%
-     group_by(!!sym(input$social_var)) %>%
-     summarise(
-       Manual_Tasks = mean(lifestyle_manual_task_freq_numeric, na.rm = TRUE),
-       Art = mean(lifestyle_performing_arts_freq_numeric, na.rm = TRUE),
-       .groups = 'drop'
-     ) %>%
-     mutate(
-       Art = -Art  # Make Art values negative
-     ) %>%
-     pivot_longer(cols = c("Manual_Tasks", "Art"), names_to = "Activity", values_to = "Mean_Frequency")
-   
-   cat("Manual vs Art plot data created. Dimensions:", dim(data), "\n")
-   data
- }, error = function(e) {
-   cat("Error creating Manual vs Art plot data:", e$message, "\n")
-   NULL
- })
- 
- req(plot_data_manual_art)
- 
- # Create the bar plot with zero in the middle
- p_manual_art <- ggplot(data = plot_data_manual_art, 
-                        aes(x = !!sym(input$social_var), 
-                            y = Mean_Frequency, 
-                            fill = Activity)) +
-   geom_bar(stat = "identity", position = "identity") +
-   geom_hline(yintercept = 0, color = "black") +
-   custom_theme() +
-   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
-         axis.text.y = element_text(size = text_size()),
-         legend.text = element_text(size = text_size()),
-         legend.title = element_text(size = text_size()),
-         plot.title = element_text(size = text_size() + 2),
-         axis.title = element_text(size = text_size())) +
-   labs(title = "Average Frequency of Manual Tasks and Art by Social Group",
-        x = "Social Group",
-        y = "Average Frequency (%)") +
-   scale_y_continuous(labels = function(x) scales::percent(abs(x)), 
-                      breaks = pretty(plot_data_manual_art$Mean_Frequency),
-                      expand = expansion(mult = c(0.1, 0.1))) +
-   scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato")) +
-   coord_flip()
+        # 1) Reconstruire les données
+        df_social_groups <- apply_mapping(df_social_groups, input$social_var)
         
-        ggsave(file, plot = p_manual_art, width = 16, height = 9, units = "in")
+        if (!all(c("lifestyle_manual_task_freq_numeric", "lifestyle_performing_arts_freq_numeric") %in% names(df_social_groups))) {
+          return(NULL)
+        }
+        
+        df_social_groups$lifestyle_manual_task_freq_numeric <- as.numeric(df_social_groups$lifestyle_manual_task_freq_numeric)
+        df_social_groups$lifestyle_performing_arts_freq_numeric <- as.numeric(df_social_groups$lifestyle_performing_arts_freq_numeric)
+        
+        plot_data_manual_art <- df_social_groups %>%
+          filter(!is.na(.data[[input$social_var]])) %>%
+          group_by(!!sym(input$social_var)) %>%
+          summarise(
+            Manual_Tasks = mean(lifestyle_manual_task_freq_numeric, na.rm = TRUE),
+            Art = mean(lifestyle_performing_arts_freq_numeric, na.rm = TRUE),
+            .groups = 'drop'
+          ) %>%
+          mutate(
+            Art = -Art  # On inverse pour mettre Art en négatif
+          ) %>%
+          tidyr::pivot_longer(
+            cols = c("Manual_Tasks", "Art"), 
+            names_to = "Activity", 
+            values_to = "Mean_Frequency"
+          )
+        
+        # 2) Construire le plot pour l'export
+        export_plot <- ggplot(
+          plot_data_manual_art, 
+          aes(x = !!sym(input$social_var), y = Mean_Frequency, fill = Activity)
+        ) +
+          geom_bar(stat = "identity", position = "identity") +
+          geom_hline(yintercept = 0, color = "black") +
+          theme_datagotchi_light(base_size = input$export_text_size) +
+          theme(
+            axis.text.x   = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.text.y   = element_text(size = input$export_text_size),
+            legend.text   = element_text(size = input$export_text_size),
+            legend.title  = element_text(size = input$export_text_size),
+            plot.title    = element_text(size = input$export_text_size + 2),
+            axis.title    = element_text(size = input$export_text_size)
+          ) +
+          labs(
+            title = "Fréquence moyenne des tâches manuelles et de l'art par groupe social",
+            x = "Groupe social",
+            y = "Fréquence moyenne (%)"
+          ) +
+          scale_y_continuous(
+            labels = function(x) scales::percent(abs(x)), 
+            breaks = scales::pretty_breaks(),
+            expand = expansion(mult = c(0.1, 0.1))
+          ) +
+          scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato")) +
+          coord_flip()
+        
+        # 3) Enregistrer avec ggsave
+        ggsave(
+          filename = file,
+          plot = export_plot,
+          width = input$export_width,
+          height = input$export_height,
+          units = "in",
+          dpi = 300
+        )
       }
     )
+    
     
     ### Plot: Hunting ###
     output$plot_hunting <- renderPlot({
@@ -692,26 +726,42 @@ output$download_plot_left_vs_right <- downloadHandler(
         paste("plot_hunting", Sys.Date(), ".png", sep = "")
       },
       content = function(file) {
-                                   # Appliquer le mapping à la variable sociale sélectionnée
- df_social_groups <- apply_mapping(df_social_groups, input$social_var)
- df_hunting <- df_social_groups %>%
-   filter(!is.na(.data[[input$social_var]]), !is.na(lifestyle_hunting_freq_numeric)) %>%
-   group_by(!!sym(input$social_var)) %>%
-   summarise(mean_hunting_freq = mean(lifestyle_hunting_freq_numeric, na.rm = TRUE))
-
- p <- ggplot(data = df_hunting, aes(x = !!sym(input$social_var), y = mean_hunting_freq)) +
-   geom_bar(stat = "identity", fill = "darkorange") +
-   custom_theme() +
-   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
-         axis.text.y = element_text(size = text_size()),
-         plot.title = element_text(size = text_size() + 2),
-         axis.title = element_text(size = text_size())) +
-   labs(title = "Fréquence moyenne de la chasse par groupe social",
-        x = "Groupe social",
-        y = "Fréquence moyenne de la chasse")
-        ggsave(file, plot = p, width = 16, height = 9, units = "in")
+        
+        # 1) Reconstruire les données
+        df_social_groups <- apply_mapping(df_social_groups, input$social_var)
+        df_hunting <- df_social_groups %>%
+          filter(!is.na(.data[[input$social_var]]), !is.na(lifestyle_hunting_freq_numeric)) %>%
+          group_by(!!sym(input$social_var)) %>%
+          summarise(mean_hunting_freq = mean(lifestyle_hunting_freq_numeric, na.rm = TRUE))
+        
+        # 2) Construire le plot pour l'export
+        export_plot <- ggplot(df_hunting, aes(x = !!sym(input$social_var), y = mean_hunting_freq)) +
+          geom_bar(stat = "identity", fill = "darkorange") +
+          theme_datagotchi_light(base_size = input$export_text_size) +
+          theme(
+            axis.text.x  = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.text.y  = element_text(size = input$export_text_size),
+            plot.title   = element_text(size = input$export_text_size + 2),
+            axis.title   = element_text(size = input$export_text_size)
+          ) +
+          labs(
+            title = "Fréquence moyenne de la chasse par groupe social",
+            x = "Groupe social",
+            y = "Fréquence moyenne de la chasse"
+          )
+        
+        # 3) Enregistrer avec ggsave
+        ggsave(
+          filename = file,
+          plot = export_plot,
+          width = input$export_width,
+          height = input$export_height,
+          units = "in",
+          dpi = 300
+        )
       }
     )
+    
     
     ### Plot: Transport ###
     output$plot_reseaux <- renderPlot({
@@ -751,36 +801,57 @@ output$download_plot_left_vs_right <- downloadHandler(
         paste("plot_reseaux", Sys.Date(), ".png", sep = "")
       },
       content = function(file) {
+        
+        # 1) Reconstruire le code de construction du plot
         df_social_groups <- apply_mapping(df_social_groups, input$social_var)
-      data <- df_social_groups %>%
-        filter(!is.na(.data[[input$social_var]]), !is.na(lifestyle_medsociaux_plus_frequent)) %>%
-        group_by(!!sym(input$social_var), lifestyle_medsociaux_plus_frequent) %>%
-        summarise(count = n(), .groups = 'drop') %>%
-        group_by(!!sym(input$social_var)) %>%
-        mutate(proportion = count / sum(count)) %>%
-        ungroup()
-
-      p <- ggplot(data = data, 
-                  aes(x = !!sym(input$social_var), 
-                      y = proportion, 
-                      fill = lifestyle_medsociaux_plus_frequent)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        custom_theme() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
-              axis.text.y = element_text(size = text_size()),
-              legend.text = element_text(size = text_size()),
-              legend.title = element_text(size = text_size()),
-              plot.title = element_text(size = text_size() + 2),
-              axis.title = element_text(size = text_size())) +
-        labs(title = "Most Frequent Social Media by Social Group",
-             x = "Social Group",
-             y = "Proportion",
-             fill = "Social Media") +
-        scale_y_continuous(labels = scales::percent) +
-        scale_fill_manual(values = sns_colors)
-        ggsave(file, plot = p, width = 16, height = 9, units = "in")
+        data <- df_social_groups %>%
+          filter(!is.na(.data[[input$social_var]]), !is.na(lifestyle_medsociaux_plus_frequent)) %>%
+          group_by(!!sym(input$social_var), lifestyle_medsociaux_plus_frequent) %>%
+          summarise(count = n(), .groups = 'drop') %>%
+          group_by(!!sym(input$social_var)) %>%
+          mutate(proportion = count / sum(count)) %>%
+          ungroup()
+        
+        # 2) Construire le plot pour l'export
+        export_plot <- ggplot(
+          data, 
+          aes(
+            x = !!sym(input$social_var), 
+            y = proportion, 
+            fill = lifestyle_medsociaux_plus_frequent
+          )
+        ) +
+          geom_bar(stat = "identity", position = "dodge") +
+          theme_datagotchi_light(base_size = input$export_text_size) +
+          theme(
+            axis.text.x  = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.text.y  = element_text(size = input$export_text_size),
+            legend.text  = element_text(size = input$export_text_size),
+            legend.title = element_text(size = input$export_text_size),
+            plot.title   = element_text(size = input$export_text_size + 2),
+            axis.title   = element_text(size = input$export_text_size)
+          ) +
+          labs(
+            title = "Most Frequent Social Media by Social Group",
+            x = "Social Group",
+            y = "Proportion",
+            fill = "Social Media"
+          ) +
+          scale_y_continuous(labels = scales::percent) +
+          scale_fill_manual(values = sns_colors)
+        
+        # 3) Enregistrer avec ggsave
+        ggsave(
+          filename = file,
+          plot = export_plot,
+          width = input$export_width,
+          height = input$export_height,
+          units = "in",
+          dpi = 300
+        )
       }
     )
+    
     # In groupsModule.R server function
     custom_theme <- reactive({
       create_custom_theme(text_size())
