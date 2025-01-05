@@ -285,7 +285,12 @@ socialGroupsServer <- function(id, data) {
         geom_bar(stat = "identity", position = "dodge") +
         custom_theme() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
-              axis.text.y = element_text(size = text_size()),
+              axis.title.y = element_text(
+                margin = margin(r = 30)  # éloigne le titre de l’axe
+              ),
+              axis.text.y = element_text(
+                        size = text_size(),
+                        margin = margin(r = 0)),
               legend.text = element_text(size = text_size()),
               legend.title = element_text(size = text_size()),
               plot.title = element_text(size = text_size() + 2),
@@ -329,6 +334,9 @@ output$download_plot_vote_choice <- downloadHandler(
       theme_datagotchi_light(base_size = input$export_text_size) +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+        axis.title.y = element_text(
+          margin = margin(r = 20)  # éloigne le titre de l’axe
+        ),
         axis.text.y = element_text(size = input$export_text_size),
         legend.text = element_text(size = input$export_text_size),
         legend.title = element_text(size = input$export_text_size),
@@ -429,6 +437,9 @@ output$plot_turnout <- renderPlot({
     coord_flip() +
     custom_theme() +
     theme(axis.text.x = element_text(size = text_size()),
+          axis.title.x = element_text(
+            margin = margin(t = 20)  # éloigne "Taux de participation électorale" de l’axe
+          ),
           axis.text.y = element_text(size = text_size()),
           plot.title = element_text(size = text_size() + 2),
           axis.title = element_text(size = text_size()),
@@ -472,6 +483,9 @@ output$download_plot_turnout <- downloadHandler(
       theme_datagotchi_light(base_size = input$export_text_size) +
       theme(
         axis.text.x = element_text(size = input$export_text_size),
+        axis.title.x = element_text(
+          margin = margin(t = 30)  # éloigne "Taux de participation électorale" de l’axe
+        ),
         axis.text.y = element_text(size = input$export_text_size),
         plot.title  = element_text(size = input$export_text_size + 2),
         axis.title  = element_text(size = input$export_text_size),
@@ -712,7 +726,7 @@ output$download_plot_left_vs_right <- downloadHandler(
           mutate(
             Art = -Art  # Make Art values negative
           ) %>%
-          pivot_longer(cols = c("Manual_Tasks", "Art"), names_to = "Activity", values_to = "Mean_Frequency")
+          pivot_longer(cols = c("Manual_Tasks", "Art"), names_to = "Activité", values_to = "Mean_Frequency")
         
         cat("Manual vs Art plot data created. Dimensions:", dim(data), "\n")
         data
@@ -727,11 +741,14 @@ output$download_plot_left_vs_right <- downloadHandler(
       p_manual_art <- ggplot(data = plot_data_manual_art, 
                               aes(x = !!sym(input$social_var), 
                                   y = Mean_Frequency, 
-                                  fill = Activity)) +
+                                  fill = Activité)) +
         geom_bar(stat = "identity", position = "identity") +
         geom_hline(yintercept = 0, color = "black") +
         custom_theme() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
+              axis.title.x = element_text(
+                margin = margin(t = 20)  
+              ),
               axis.text.y = element_text(size = text_size()),
               legend.text = element_text(size = text_size()),
               legend.title = element_text(size = text_size()),
@@ -743,7 +760,8 @@ output$download_plot_left_vs_right <- downloadHandler(
         scale_y_continuous(labels = function(x) scales::percent(abs(x)), 
                            breaks = pretty(plot_data_manual_art$Mean_Frequency),
                            expand = expansion(mult = c(0.1, 0.1))) +
-        scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato")) +
+        scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato"),
+                          labels = c("Manual_Tasks" = "Tâches manuelles", "Art" = "Activité artistique")) +
         coord_flip()
       
       cat("Manual vs Art plot created successfully\n")
@@ -783,19 +801,25 @@ output$download_plot_left_vs_right <- downloadHandler(
           ) %>%
           tidyr::pivot_longer(
             cols = c("Manual_Tasks", "Art"),
-            names_to = "Activity",
+            names_to = "Activité",
             values_to = "Mean_Frequency"
           )
         
-        export_plot <- ggplot(plot_data_manual_art, aes(x = !!sym(input$social_var), y = Mean_Frequency, fill = Activity)) +
+        export_plot <- ggplot(plot_data_manual_art, aes(x = !!sym(input$social_var), y = Mean_Frequency, fill = Activité)) +
           geom_bar(stat = "identity", position = "identity") +
           geom_hline(yintercept = 0, color = "black") +
           theme_datagotchi_light(base_size = input$export_text_size) +
           theme(
             axis.text.x   = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.title.x = element_text(
+              margin = margin(t = 20)  
+            ),
             axis.text.y   = element_text(size = input$export_text_size),
             legend.text   = element_text(size = input$export_text_size),
             legend.title  = element_text(size = input$export_text_size),
+            legend.position = "bottom",         # Place la légende en bas
+            legend.justification = "center",    # Centre la légende horizontalement
+            legend.box.just = "center", 
             plot.title    = element_text(size = input$export_text_size + 2),
             axis.title    = element_text(size = input$export_text_size)
           ) +
@@ -809,7 +833,8 @@ output$download_plot_left_vs_right <- downloadHandler(
             breaks = scales::pretty_breaks(),
             expand = expansion(mult = c(0.1, 0.1))
           ) +
-          scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato")) +
+          scale_fill_manual(values = c("Manual_Tasks" = "steelblue", "Art" = "tomato"),
+                            labels = c("Manual_Tasks" = "Tâches manuelles", "Art" = "Activité artistique")) +
           coord_flip()
         
         # 1.2 Sauvegarde temporaire
@@ -876,6 +901,9 @@ output$download_plot_left_vs_right <- downloadHandler(
         geom_bar(stat = "identity", fill = "darkorange") +
         custom_theme() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
+              axis.title.y = element_text(
+                margin = margin(r = 20)  # éloigne le titre de l’axe
+              ),
               axis.text.y = element_text(size = text_size()),
               plot.title = element_text(size = text_size() + 2),
               axis.title = element_text(size = text_size())) +
@@ -905,6 +933,9 @@ output$download_plot_left_vs_right <- downloadHandler(
           theme_datagotchi_light(base_size = input$export_text_size) +
           theme(
             axis.text.x = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.title.y = element_text(
+              margin = margin(r = 20)  # éloigne le titre de l’axe
+            ),
             axis.text.y = element_text(size = input$export_text_size),
             plot.title  = element_text(size = input$export_text_size + 2),
             axis.title  = element_text(size = input$export_text_size)
@@ -966,7 +997,7 @@ output$download_plot_left_vs_right <- downloadHandler(
     
     
     
-    ### Plot: Transport ###
+    ### Plot: Réseaux sociaux ###
     output$plot_reseaux <- renderPlot({
       # Appliquer le mapping à la variable sociale sélectionnée
  df_social_groups <- apply_mapping(df_social_groups, input$social_var)
@@ -985,6 +1016,9 @@ output$download_plot_left_vs_right <- downloadHandler(
         geom_bar(stat = "identity", position = "dodge") +
         custom_theme() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1, size = text_size()),
+              axis.title.y = element_text(
+                margin = margin(r = 20)  # éloigne le titre de l’axe
+              ),
               axis.text.y = element_text(size = text_size()),
               legend.text = element_text(size = text_size()),
               legend.title = element_text(size = text_size()),
@@ -1022,6 +1056,9 @@ output$download_plot_left_vs_right <- downloadHandler(
           theme_datagotchi_light(base_size = input$export_text_size) +
           theme(
             axis.text.x  = element_text(angle = 45, hjust = 1, size = input$export_text_size),
+            axis.title.y = element_text(
+              margin = margin(r = 20)  # éloigne le titre de l’axe
+            ),
             axis.text.y  = element_text(size = input$export_text_size),
             legend.text  = element_text(size = input$export_text_size),
             legend.title = element_text(size = input$export_text_size),
