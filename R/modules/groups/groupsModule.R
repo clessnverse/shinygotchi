@@ -91,7 +91,7 @@ socialGroupsServer <- function(id, data) {
     })
     
     # Read data with error checking
-    df_social_groups <- readRDS("data/df_canada.rds")
+    df_social_groups <- readRDS("data/data_pilot_clean_janv_2025")
 
     canadian_party_colors <- c(
       "lpc" = "#d71920",
