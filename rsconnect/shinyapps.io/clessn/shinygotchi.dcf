@@ -5,6 +5,6 @@ account: clessn
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13523858
-bundleId: 9469554
+bundleId: 9633542
 url: https://clessn.shinyapps.io/shinygotchi/
 version: 1
