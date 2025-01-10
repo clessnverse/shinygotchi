@@ -12,7 +12,7 @@ sex_variables <- c(
 df <- get_census(
   dataset = "CA21", regions = list(C = "1"),
   vectors = sex_variables,
-  level = "C", use_cache = FALSE, geo_format = NA, quiet = TRUE
+  level = "C", use_cache = TRUE, geo_format = NA, quiet = TRUE
 )
 
 df_clean <- df %>%
