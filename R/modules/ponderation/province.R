@@ -13,7 +13,7 @@ population_par_province <- get_census(
   use_cache = TRUE               # On peut utiliser le cache
 )
 
-df_clean <- population_par_province %>%
+df_pop_clean <- population_par_province %>%
   select(`Region Name`, `v_CA21_1: Population, 2021`) %>%  # Garder uniquement les colonnes nécessaires
   rename(
     province = `Region Name`,              # Renommer "Region Name" en "province"
@@ -36,8 +36,10 @@ df_clean <- population_par_province %>%
       province == "Yukon (Y.T.)" ~ "YT",
       TRUE ~ province  # Par défaut, garder la valeur originale si non correspondante (pour éviter des erreurs)
     ),
-    country = "CA"  # Ajouter la colonne "country"
-  )
+    country = "can"  # Ajouter la colonne "country"
+  ) %>%
+  mutate(location = country, variable = "province", value = province, population = population_2021) %>%
+  select(location, variable, value, population)
 
 # Save the data
-saveRDS(df_clean, "data/cancensus/province.rds")
+saveRDS(df_pop_clean, "data/cancensus/province.rds")
