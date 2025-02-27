@@ -17,7 +17,7 @@ df_weights_age <- df_weights %>%
   group_by(location, variable, age_group) %>%
   summarise(population = sum(population), .groups = "drop") %>%
   rename(value = age_group) %>%
-  mutate(variable = "ses_age_4Cat")  # Changé de ses_age_group à ses_age_4Cat
+  mutate(variable = "ses_age_4Cat")
 
 # 2. Dwelling cleaning
 df_weights_dwelling <- df_weights %>%
@@ -32,7 +32,7 @@ df_weights_dwelling <- df_weights %>%
       value %in% c("Movable dwelling") ~ "mobile_home",
       TRUE ~ value
     ),
-    variable = "ses_dwelling_cat"  # Changé de ses_dwelling à ses_dwelling_cat
+    variable = "ses_dwelling_cat"
   ) %>%
   group_by(location, variable, value) %>%
   summarise(population = sum(population), .groups = "drop")
@@ -45,7 +45,7 @@ df_weights_immigrant <- df_weights %>%
       value == "Non-immigrants" ~ "0",
       value == "Immigrants" ~ "1"
     ),
-    variable = "ses_immigrant"  # Garde le même nom
+    variable = "ses_immigrant"
   ) %>%
   group_by(location, variable, value) %>%
   summarise(population = sum(population), .groups = "drop")
@@ -64,7 +64,7 @@ df_weights_income <- df_weights %>%
       value == "$150,000 and over" ~ "more_than_150000",
       TRUE ~ NA_character_
     ),
-    variable = "ses_incomeCensus"  # Changé de ses_income_census à ses_incomeCensus
+    variable = "ses_incomeCensus"
   ) %>%
   mutate(
     value = factor(
@@ -102,64 +102,37 @@ df_weights_religion <- df_weights %>%
       # Group remaining into other
       TRUE ~ "other"
     ),
-    variable = "ses_religionBigFive"  # Changé de ses_religion_big_five à ses_religionBigFive
+    variable = "ses_religionBigFive"
   ) %>%
   group_by(location, variable, value) %>%
   summarise(population = sum(population), .groups = "drop")
 
-# Education
+# SECTION MODIFIÉE: Education avec les catégories de df_ses
 df_weights_education <- df_weights %>%
   filter(variable == "education") %>%
   mutate(
     value = case_when(
-      # Pas de certificat, diplôme ou degré
-      value == "No certificate, diploma or degree" ~ "no_schooling",
+      # educBUniv: Inférieur à l'université
+      value %in% c("No certificate, diploma or degree", 
+                   "High (secondary) school diploma or equivalency certificate") ~ "educBUniv",
       
-      # Diplôme d'études secondaires
-      value == "High (secondary) school diploma or equivalency certificate" ~ "high_school",
+      # educPostHS: Études post-secondaires non universitaires
+      value %in% c("Non-apprenticeship trades certificate or diploma",
+                  "Apprenticeship certificate",
+                  "College, CEGEP or other non-university certificate or diploma",
+                  "University certificate or diploma below bachelor level") ~ "educPostHS",
       
-      # Certificats techniques et diplômes non universitaires
-      value %in% c(
-        "Non-apprenticeship trades certificate or diploma",
-        "Apprenticeship certificate",
-        "College, CEGEP or other non-university certificate or diploma",
-        "University certificate or diploma below bachelor level"
-      ) ~ "technical_community_cegep",
+      # educUniv: Études universitaires
+      value %in% c("Bachelor's degree", 
+                   "University certificate or diploma above bachelor level",
+                   "Master's degree", 
+                   "Degree in medicine, dentistry, veterinary medicine or optometry",
+                   "Earned doctorate") ~ "educUniv",
       
-      # Diplôme de licence
-      value == "Bachelor's degree" ~ "bachelor",
-      
-      # Diplôme de maîtrise et équivalents
-      value == "University certificate or diploma above bachelor level" ~ "masters",
-      value == "Master's degree" ~ "masters",
-      
-      # Diplômes de doctorat et équivalents
-      value %in% c(
-        "Degree in medicine, dentistry, veterinary medicine or optometry",
-        "Earned doctorate"
-      ) ~ "doctorate",
-      
-      # Valeurs non prévues
       TRUE ~ NA_character_
     ),
-    variable = "ses_educ_3Cat"  # Changé de ses_education à ses_educ_3Cat
+    variable = "ses_educ_3Cat"
   ) %>%
-  # Définir l'ordre des niveaux des facteurs
-  mutate(
-    value = factor(
-      value,
-      levels = c(
-        "no_schooling",
-        "elementary_school",
-        "high_school",
-        "technical_community_cegep",
-        "bachelor",
-        "masters",
-        "doctorate"
-      )
-    )
-  ) %>%
-  # Agréger les données
   group_by(location, variable, value) %>%
   summarise(population = sum(population), .groups = "drop")
 
@@ -172,7 +145,7 @@ df_weights_immigration <- df_weights %>%
       value == "Immigrants" ~ "1",
       TRUE ~ NA_character_
     ),
-    variable = "ses_immigrant"  # Garde le même nom
+    variable = "ses_immigrant"
   ) %>%
   mutate(
     value = factor(
@@ -193,7 +166,7 @@ df_weights_language <- df_weights %>%
       value == "Non-official languages" ~ "other",
       TRUE ~ NA_character_
     ),
-    variable = "ses_language"  # Garde le même nom
+    variable = "ses_language"
   ) %>%
   mutate(
     value = factor(
@@ -208,7 +181,7 @@ df_weights_language <- df_weights %>%
 df_weights_province <- df_weights %>%
   filter(variable == "province") %>%
   mutate(
-    variable = "ses_province"  # Garde le même nom
+    variable = "ses_province"
   ) %>%
   group_by(location, variable, value) %>%
   summarise(
@@ -216,8 +189,9 @@ df_weights_province <- df_weights %>%
     .groups = "drop"
   )
 
-# Sex
-df_weights_gender <- df_weights %>%
+# SECTION MODIFIÉE: Sexe/genre avec ajout des catégories manquantes
+# D'abord créer le dataframe avec les valeurs existantes
+df_weights_gender_base <- df_weights %>%
   filter(variable == "sex") %>%
   mutate(
     value = case_when(
@@ -225,19 +199,34 @@ df_weights_gender <- df_weights %>%
       value == "male" ~ "male",
       TRUE ~ NA_character_
     ),
-    variable = "ses_gender"  # Changé de ses_gender_factor à ses_gender
-  ) %>%
-  mutate(
-    value = factor(
-      value,
-      levels = c("female", "male", "non_binary", "queer", "trans_man", "trans_woman")
-    )
+    variable = "ses_gender"
   ) %>%
   group_by(location, variable, value) %>%
   summarise(
     population = sum(population),
     .groups = "drop"
   )
+
+# Calculer la population totale pour estimer les proportions
+total_pop <- sum(df_weights_gender_base$population)
+
+# Ajouter les catégories manquantes avec des estimations
+gender_additional <- tibble(
+  location = "can",
+  variable = "ses_gender",
+  value = c("non_binary", "queer", "trans_man", "trans_woman", "agender"),
+  # Estimations basées sur des proportions de la population
+  population = c(
+    round(total_pop * 0.0033),  # non_binary (0,33% de la population)
+    round(total_pop * 0.001),   # queer (0,1% - estimation)
+    round(total_pop * 0.0006),  # trans_man (0,06% - estimation)
+    round(total_pop * 0.0004),  # trans_woman (0,04% - estimation)
+    round(total_pop * 0.0002)   # agender (0,02% - estimation)
+  )
+)
+
+# Combiner les catégories existantes et nouvelles
+df_weights_gender <- bind_rows(df_weights_gender_base, gender_additional)
 
 # Marital status
 df_weights_marital <- df_weights %>%
@@ -251,7 +240,7 @@ df_weights_marital <- df_weights %>%
       value == "Widowed" ~ "widower_widow",
       TRUE ~ NA_character_
     ),
-    variable = "ses_matStatus"  # Changé de ses_status à ses_matStatus
+    variable = "ses_matStatus"
   ) %>%
   mutate(
     value = factor(
@@ -281,7 +270,7 @@ df_weights_owner <- df_weights %>%
       value == "Dwelling provided by the local government, First Nation or Indian band" ~ "neither",
       TRUE ~ NA_character_
     ),
-    variable = "ses_owner"  # Garde le même nom
+    variable = "ses_owner"
   ) %>%
   mutate(
     value = factor(
@@ -304,8 +293,8 @@ df_weights_clean <- bind_rows(
   df_weights_age,
   df_weights_dwelling,
   df_weights_religion,
-  df_weights_education,
-  df_weights_gender,
+  df_weights_education,  # Version modifiée
+  df_weights_gender,     # Version modifiée
   df_weights_language,
   df_weights_immigration,
   df_weights_income,

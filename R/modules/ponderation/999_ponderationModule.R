@@ -5,50 +5,28 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(DT)
+library(shinycssloaders)
 
-# Fonction de préparation des poids
+# Fonction de préparation des poids - MODIFIÉE
 prepare_weights <- function(df_weights_clean) {
   # Transformer les données de poids en format long et standardisé
   weights_base <- df_weights_clean %>%
     mutate(
       # Convertir value en caractère si nécessaire
       value = as.character(value)
-    )
+    ) %>%
+    # Calculer les proportions pour chaque variable
+    group_by(variable) %>%
+    mutate(
+      total_population = sum(population),
+      proportion = population / total_population
+    ) %>%
+    ungroup()
   
-  # Poids spécifiques pour le genre basés sur les données de Statistique Canada
-  gender_weights <- tibble(
-    location = "can",
-    variable = "ses_gender",
-    value = c("female", "male", "non_binary", "queer", "trans_man", "trans_woman"),
-    population = c(
-      # Estimation basée sur le fait que les hommes et femmes représentent la majorité
-      15000000,  # female
-      15000000,  # male
-      41355,     # non_binary (0,33% de la population)
-      round(41355 * 0.3),  # queer (estimation)
-      round(100815 * 0.6), # trans_man 
-      round(100815 * 0.4)  # trans_woman
-    )
-  ) %>%
-  mutate(
-    total_population = sum(population),
-    proportion = population / total_population
-  )
+  # Nous n'avons plus besoin de gérer les catégories de genre séparément
+  # car elles ont été ajoutées en amont dans df_weights_clean
   
-  # Combiner les poids existants avec les poids de genre
-  weights_combined <- bind_rows(
-    weights_base %>% 
-      filter(variable != "ses_gender"),
-    gender_weights
-  ) %>%
-  group_by(variable) %>%
-  mutate(
-    total_population = sum(population),
-    proportion = population / total_population
-  ) %>%
-  ungroup()
-  
-  return(weights_combined)
+  return(weights_base)
 }
 
 # Module UI pour l'upload et la pondération
@@ -87,9 +65,24 @@ dataWeightingUI <- function(id) {
             actionButton(ns("process_data"), "Pondérer les données", 
                         class = "btn-success", 
                         icon = icon("balance-scale")),
-            downloadButton(ns("download_weighted"), "Télécharger les données pondérées", 
-                           class = "btn-primary mt-3", 
-                           icon = icon("download"))
+                        downloadButton(
+                          ns("download_weighted"),
+                          span(icon("download"), "Télécharger les données pondérées"),
+                          class = "btn",
+                          style = "
+                            background-color: #2c3e50; 
+                            color: white; 
+                            width: 100%; 
+                            margin-top: 15px; 
+                            font-weight: bold; 
+                            border: none; 
+                            border-radius: 4px;
+                            padding: 10px 15px; 
+                            font-size: 1em;
+                            height: 45px;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                          "
+                        )
           )
         )
       ),
@@ -105,9 +98,42 @@ dataWeightingUI <- function(id) {
               h4("Aperçu des données", class = "card-title"),
               uiOutput(ns("data_info")),
               dataTableOutput(ns("preview_table")) %>% withSpinner(),
-              verbatimTextOutput(ns("weighting_stats")) %>% withSpinner()
+              
+              # Code de diagnostic pour les variables sélectionnées
+              conditionalPanel(
+                condition = paste0("input['", ns("weighting_vars"), "'].length > 0"),
+                h4("Diagnostic des variables", class = "mt-4"),
+                uiOutput(ns("variable_diagnostics"))
+              ),
+              
+              # Statistiques après pondération
+              conditionalPanel(
+                condition = paste0("input['", ns("process_data"), "'] > 0"),
+                div(
+                  class = "card mt-3",
+                  div(
+                    class = "card-body",
+                    h4("Résultats de la pondération", class = "card-title"),
+                    verbatimTextOutput(ns("weighting_stats")) %>% withSpinner()
+                  )
+                )
+              )
             )
           )
+        )
+      )
+    ),
+
+    # Affichage des données pondérées
+    conditionalPanel(
+      condition = paste0("input['", ns("process_data"), "'] > 0"),
+      div(
+        class = "card mt-3",
+        div(
+          class = "card-body",
+          h4("Données pondérées", class = "card-title"),
+          tags$div(id = ns("weighted_container"), 
+                  dataTableOutput(ns("weighted_data_preview")))
         )
       )
     ),
@@ -144,6 +170,7 @@ dataWeightingServer <- function(id, df_weights_clean) {
     # Données chargées
     uploaded_data <- reactiveVal(NULL)
     weighted_data <- reactiveVal(NULL)
+    weighting_details <- reactiveVal(NULL)
     
     # Charger les données RDS
     observeEvent(input$upload_rds, {
@@ -181,13 +208,20 @@ dataWeightingServer <- function(id, df_weights_clean) {
       req(uploaded_data())
       data <- uploaded_data()
       
+      # Variables clés pour la pondération
+      key_vars <- c("ses_age_4Cat", "ses_gender", "ses_educ_3Cat", 
+                    "ses_province", "ses_incomeCensus", "ses_language")
+      
       tagList(
-        p(paste("Observations:", nrow(data))),
-        p(paste("Variables:", paste(names(data), collapse = ", "))),
+        div(
+          class = "alert alert-info",
+          p(strong("Informations sur les données:")),
+          p(paste("Observations:", nrow(data))),
+          p(paste("Variables totales:", ncol(data)))
+        ),
         h5("Variables clés disponibles:"),
         tags$ul(
-          lapply(c("ses_age_4Cat", "ses_gender", "ses_educ_3Cat", 
-                   "ses_province", "ses_incomeCensus", "ses_language"), function(var) {
+          lapply(key_vars, function(var) {
             if (var %in% names(data)) {
               tags$li(HTML(paste0("<span style='color:green'><i class='fas fa-check'></i></span> ", var)))
             } else {
@@ -195,6 +229,79 @@ dataWeightingServer <- function(id, df_weights_clean) {
             }
           })
         )
+      )
+    })
+    
+    # Diagnostic des variables sélectionnées
+    output$variable_diagnostics <- renderUI({
+      req(uploaded_data(), input$weighting_vars)
+      data <- uploaded_data()
+      
+      # Vérifier les variables sélectionnées
+      diagnostics <- lapply(input$weighting_vars, function(var) {
+        # Vérifier si la variable existe
+        if (!var %in% names(data)) {
+          return(tags$div(
+            class = "alert alert-danger",
+            HTML(paste0("<strong>Variable manquante:</strong> ", var))
+          ))
+        }
+        
+        # Compter les valeurs uniques et manquantes
+        n_unique <- length(unique(data[[var]]))
+        n_missing <- sum(is.na(data[[var]]))
+        
+        # Obtenez les valeurs de poids disponibles
+        weight_values <- weights_prepared %>%
+          filter(variable == var) %>%
+          pull(value)
+        
+        # Obtenez les valeurs dans les données
+        data_values <- unique(as.character(data[[var]]))
+        
+        # Trouvez les valeurs qui sont dans les données mais pas dans les poids
+        missing_in_weights <- setdiff(data_values, weight_values)
+        
+        # Message d'alerte pour les valeurs manquantes dans les poids
+        missing_values_warning <- if(length(missing_in_weights) > 0) {
+          tags$div(
+            class = "alert alert-warning",
+            HTML(paste0("<strong>Valeurs non pondérables:</strong> ", 
+                       paste(missing_in_weights, collapse = ", "),
+                       " (", length(missing_in_weights), " sur ", length(data_values), " valeurs)"))
+          )
+        } else {
+          tags$div(
+            class = "alert alert-success",
+            HTML("<strong>Excellente compatibilité:</strong> Toutes les valeurs peuvent être pondérées")
+          )
+        }
+        
+        # Afficher les diagnostics
+        tags$div(
+          h5(var),
+          tags$div(
+            class = "row",
+            tags$div(
+              class = "col-md-6",
+              tags$ul(
+                tags$li(paste("Valeurs uniques:", n_unique)),
+                tags$li(paste("Valeurs manquantes:", n_missing, "(", round(n_missing/nrow(data)*100, 1), "%)")),
+                tags$li(paste("Valeurs dans les poids:", length(weight_values)))
+              )
+            ),
+            tags$div(
+              class = "col-md-6",
+              missing_values_warning
+            )
+          ),
+          hr()
+        )
+      })
+      
+      # Combiner tous les diagnostics
+      tagList(
+        diagnostics
       )
     })
     
@@ -211,11 +318,11 @@ dataWeightingServer <- function(id, df_weights_clean) {
       lengthMenu = c(5, 10, 15)
     ))
     
-    # Fonction de pondération
+    # Fonction de pondération - OPTIMISÉE
     perform_weighting <- function(data, weights_prepared, vars_to_weight) {
       # Convertir les colonnes de données en caractères
       data_converted <- data %>%
-        mutate(across(where(is.numeric), as.character))
+        mutate(across(all_of(vars_to_weight), as.character))
       
       # Initialiser avec des poids unitaires
       result <- data_converted %>% mutate(weight = 1.0)
@@ -223,9 +330,16 @@ dataWeightingServer <- function(id, df_weights_clean) {
       # Stocker les statistiques
       before_stats <- list()
       after_stats <- list()
+      weight_factors_list <- list()
       
       # Pondérer par chaque variable sélectionnée
       for (var in vars_to_weight) {
+        # Vérifier les valeurs manquantes
+        missing_count <- sum(is.na(result[[var]]))
+        if (missing_count > 0) {
+          warning(paste0("Variable '", var, "' contient ", missing_count, " valeurs manquantes"))
+        }
+        
         # Distribution actuelle
         current_dist <- result %>% 
           group_by(!!sym(var)) %>%
@@ -245,6 +359,9 @@ dataWeightingServer <- function(id, df_weights_clean) {
                             proportion.y / proportion.x, 
                             1)
           )
+        
+        # Stocker les facteurs pour analyse
+        weight_factors_list[[var]] <- weight_factors
         
         # Appliquer les facteurs de pondération
         result <- result %>%
@@ -278,15 +395,23 @@ dataWeightingServer <- function(id, df_weights_clean) {
         mutate(weight = weight * (nrow(data) / sum(weight)))
       
       # Restaurer les types de colonnes originaux
-      result <- bind_cols(
-        data %>% select(-any_of(names(result))),
-        result
-      )
+      for (col in names(data)) {
+        if (col %in% names(result) && !col %in% vars_to_weight) {
+          result[[col]] <- data[[col]]
+        }
+      }
+      
+      # Calculer le design effect et la taille effective de l'échantillon
+      design_effect <- 1 + (var(result$weight) / mean(result$weight)^2)
+      effective_sample_size <- nrow(result) / design_effect
       
       list(
         weighted_data = result,
         before_stats = before_stats,
-        after_stats = after_stats
+        after_stats = after_stats,
+        weight_factors = weight_factors_list,
+        design_effect = design_effect,
+        effective_sample_size = effective_sample_size
       )
     }
     
@@ -294,31 +419,80 @@ dataWeightingServer <- function(id, df_weights_clean) {
     observeEvent(input$process_data, {
       req(uploaded_data(), input$weighting_vars)
       
-      weighting_result <- perform_weighting(
-        uploaded_data(), 
-        weights_prepared, 
-        input$weighting_vars
-      )
-      
-      weighted_data(weighting_result$weighted_data)
-      
-      showNotification("Pondération terminée", type = "message")
+      # Afficher un message de progression
+      withProgress(message = 'Pondération en cours...', value = 0.5, {
+        weighting_result <- perform_weighting(
+          uploaded_data(), 
+          weights_prepared, 
+          input$weighting_vars
+        )
+        
+        weighted_data(weighting_result$weighted_data)
+        weighting_details(weighting_result)
+        
+        showNotification("Pondération terminée", type = "message")
+      })
     })
     
-    # Statistiques de pondération
+    # Statistiques de pondération - AMÉLIORÉES
     output$weighting_stats <- renderPrint({
-      req(weighted_data())
+      req(weighted_data(), weighting_details())
+      
+      details <- weighting_details()
+      data <- weighted_data()
       
       cat("Statistiques de pondération:\n")
-      cat("Nombre total de poids:", nrow(weighted_data()), "\n")
-      cat("Moyenne des poids:", mean(weighted_data()$weight), "\n")
-      cat("Écart-type des poids:", sd(weighted_data()$weight), "\n")
-      cat("Min des poids:", min(weighted_data()$weight), "\n")
-      cat("Max des poids:", max(weighted_data()$weight), "\n")
+      cat("====================================\n")
+      cat("Nombre total d'observations:", nrow(data), "\n")
+      cat("Moyenne des poids:", round(mean(data$weight), 4), "\n")
+      cat("Écart-type des poids:", round(sd(data$weight), 4), "\n")
+      cat("Min des poids:", round(min(data$weight), 4), "\n")
+      cat("Max des poids:", round(max(data$weight), 4), "\n")
       cat("Coefficient de variation:", 
-          sd(weighted_data()$weight) / mean(weighted_data()$weight), "\n")
+          round(sd(data$weight) / mean(data$weight), 4), "\n\n")
+      
+      cat("Diagnostics avancés:\n")
+      cat("====================================\n")
+      cat("Design Effect:", round(details$design_effect, 2), "\n")
+      cat("Taille effective de l'échantillon:", round(details$effective_sample_size), "\n")
+      cat("Ratio d'efficacité:", round(100 * details$effective_sample_size / nrow(data), 1), "%\n\n")
+      
+      cat("Variables pondérées:", paste(input$weighting_vars, collapse=", "), "\n")
     })
     
+   # Aperçu des données pondérées
+output$weighted_data_preview <- renderDataTable({
+  req(weighted_data())
+  # Forcer la réactivité en récupérant les données maintenant
+  data <- isolate(weighted_data())
+  
+  # S'assurer que les données sont disponibles avant de les afficher
+  validate(need(!is.null(data), "Données pondérées non disponibles"))
+  
+  # Mettre la colonne de poids en premier et arrondir pour une meilleure présentation
+  data_preview <- data %>%
+    mutate(weight = round(weight, 4)) %>%
+    select(weight, everything()) %>%
+    head(10)
+  
+  # Préparation des données pour l'affichage
+  data_preview
+}, options = list(
+  scrollX = TRUE,
+  pageLength = 5,
+  lengthMenu = c(5, 10, 15),
+  columnDefs = list(
+    list(
+      targets = 0,  # La colonne de poids (première colonne)
+      render = JS("function(data, type, row) {
+        return type === 'display' ? 
+          '<span style=\"font-weight: bold; color: #4e73df;\">' + 
+          parseFloat(data).toFixed(4) + '</span>' : data;
+      }")
+    )
+  )
+))
+
     # Option de téléchargement des données pondérées
     output$download_weighted <- downloadHandler(
       filename = function() {
