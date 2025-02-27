@@ -5,9 +5,9 @@ library(tidyr)
 df_pilot <- readRDS("data/data_pilot_clean_janv_2025.rds")
 
 df_ses <- df_pilot %>%
-  select(ses_age_group, ses_dwelling, ses_education, ses_immigrant, ses_income_census, 
-         ses_language, ses_status, ses_owner, ses_province, ses_religion_big_five, 
-         ses_gender_factor) %>%
+  select(ses_age_4Cat, ses_dwelling_cat, ses_educ_3Cat, ses_immigrant, ses_incomeCensus,
+         ses_language, ses_matStatus, ses_owner, ses_province, ses_religionBigFive,
+         ses_gender) %>%
   # Convert all columns to character
   mutate(across(everything(), as.character)) %>%
   # Now pivot
@@ -21,5 +21,4 @@ df_ses <- df_pilot %>%
   # Remove any NA combinations if you want
   filter(!is.na(value)) %>%
   mutate(location = "can")
-
 

@@ -1131,4 +1131,3 @@ output$download_plot_left_vs_right <- downloadHandler(
     
   }) 
 }
-

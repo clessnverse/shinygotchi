@@ -20,6 +20,7 @@ source("R/utils/themes.R")
 font_init()
 source("R/modules/plot_builder/plotBuilderModule.R")
 source("R/modules/groups/groupsModule.R")
+source("R/modules/ponderation/999_ponderationModule.R")
 
 # Custom theme
 my_theme <- bs_theme(
@@ -169,6 +170,15 @@ ui <- tagList(
         plotBuilderUI("plot_builder")
       )
     ),
+    # Dans la section navbarPage
+tabPanel(
+  "Pondération de données",
+  icon = icon("balance-scale"),
+  div(
+    class = "animate-fade-in",
+    dataWeightingUI("data_weighting")
+  )
+),
     # Nouvel onglet "Partenaires"
     tabPanel(
       "Partenaires",
@@ -192,9 +202,13 @@ server <- function(input, output, session) {
     color = "#ffffff"
   )
 
+  # Charger les données de pondération une seule fois
+  df_weights_clean <- readRDS("data/cancensus/df_weights_clean.rds")
+
   # Initialize modules
   plotBuilderServer("plot_builder")
   socialGroupsServer("social_explorer", data)
+  dataWeightingServer("data_weighting", df_weights_clean)  # Initialiser le nouveau module
 
   # Hide loading screen after delay
   Sys.sleep(1) # Simulate loading time
