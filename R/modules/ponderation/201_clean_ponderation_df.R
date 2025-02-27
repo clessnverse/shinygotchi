@@ -10,7 +10,7 @@ df_weights_age <- df_weights %>%
       as.numeric(value) >= 18 & as.numeric(value) <= 24 ~ "18_24",
       as.numeric(value) >= 25 & as.numeric(value) <= 44 ~ "25_44",
       as.numeric(value) >= 45 & as.numeric(value) <= 64 ~ "45_64",
-      as.numeric(value) >= 65 ~ "65_plus"
+      as.numeric(value) >= 65 ~ "65+"
     )
   ) %>%
   filter(!is.na(age_group)) %>%
