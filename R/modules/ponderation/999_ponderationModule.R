@@ -59,9 +59,31 @@ dataWeightingUI <- function(id) {
                      buttonLabel = "Parcourir...",
                      placeholder = "Aucun fichier sélectionné"),
             selectInput(ns("weighting_vars"), 
-                        "Variables de pondération", 
+                        "Variables de pondération (toutes requises)", 
                         choices = NULL, 
-                        multiple = TRUE),
+                        multiple = TRUE,
+                        selectize = TRUE),
+            tags$script(HTML(paste0("
+              $(document).on('shiny:inputchanged', function(event) {
+                if(event.name === '", ns("weighting_vars"), "') {
+                  var selectInput = $('#", ns("weighting_vars"), "').data('selectize');
+                  if(selectInput) {
+                    // Réactiver les options disponibles
+                    var allOptions = selectInput.options;
+                    var selectedOptions = selectInput.items;
+                    
+                    // Si une option est désélectionnée, la resélectionner
+                    if(Object.keys(allOptions).length > selectedOptions.length) {
+                      Object.keys(allOptions).forEach(function(option) {
+                        if(selectedOptions.indexOf(option) === -1) {
+                          selectInput.addItem(option);
+                        }
+                      });
+                    }
+                  }
+                }
+              });
+            "))),
             actionButton(ns("process_data"), "Pondérer les données", 
                         class = "btn-success", 
                         icon = icon("balance-scale")),
@@ -149,11 +171,11 @@ dataWeightingUI <- function(id) {
             p("Cette fonction permet de pondérer vos données brutes pour qu'elles soient représentatives de la population canadienne, en utilisant des données de recensement."),
             tags$ol(
               tags$li("Téléchargez votre fichier RDS contenant les variables socio-démographiques"),
-              tags$li("Sélectionnez les variables à pondérer"),
+              tags$li("Vérifiez les variables disponibles pour la pondération (toutes seront utilisées)"),
               tags$li("Cliquez sur 'Pondérer les données'"),
               tags$li("Téléchargez le fichier pondéré pour vos analyses")
             ),
-            p("Note: Les variables clés utilisées pour la pondération sont: l'âge, le sexe, l'éducation, la province, le revenu, et la langue.")
+            p("Note: Toutes les variables disponibles sont automatiquement sélectionnées et requises pour la pondération. Les variables clés sont: l'âge, le sexe, l'éducation, la province, le revenu, et la langue.")
           )
         )
       )
@@ -189,6 +211,7 @@ dataWeightingServer <- function(id, df_weights_clean) {
           names(data_for_vars), 
           unique(weights_prepared$variable)
         )
+        # Forcer la sélection de toutes les variables disponibles
         updateSelectInput(
           session, 
           "weighting_vars", 
