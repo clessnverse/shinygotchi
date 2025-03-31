@@ -9,7 +9,7 @@ source("R/utils/viz.R")
 # Module UI
 plotBuilderUI <- function(id) {
   ns <- NS(id)
-  df <- readRDS("data/df.rds") 
+  df <- readRDS("data/datagotchi2025_canada_app_Ponderee_20250330.rds") 
   sidebarLayout(
     sidebarPanel(
       # Correctement namespacer le fileInput
