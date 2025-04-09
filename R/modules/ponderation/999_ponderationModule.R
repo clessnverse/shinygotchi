@@ -342,101 +342,106 @@ dataWeightingServer <- function(id, df_weights_clean) {
     ))
     
     # Fonction de pondération - OPTIMISÉE
-    perform_weighting <- function(data, weights_prepared, vars_to_weight) {
-      # Convertir les colonnes de données en caractères
-      data_converted <- data %>%
-        mutate(across(all_of(vars_to_weight), as.character))
-      
-      # Initialiser avec des poids unitaires
-      result <- data_converted %>% mutate(weight = 1.0)
-      
-      # Stocker les statistiques
-      before_stats <- list()
-      after_stats <- list()
-      weight_factors_list <- list()
-      
-      # Pondérer par chaque variable sélectionnée
-      for (var in vars_to_weight) {
-        # Vérifier les valeurs manquantes
-        missing_count <- sum(is.na(result[[var]]))
-        if (missing_count > 0) {
-          warning(paste0("Variable '", var, "' contient ", missing_count, " valeurs manquantes"))
-        }
-        
-        # Distribution actuelle
-        current_dist <- result %>% 
-          group_by(!!sym(var)) %>%
-          summarise(count = n(), .groups = "drop") %>%
-          mutate(proportion = count / sum(count))
-        
-        # Distribution cible
-        target_dist <- weights_prepared %>%
-          filter(variable == var) %>%
-          select(value, proportion)
-        
-        # Calculer les facteurs de pondération
-        weight_factors <- current_dist %>%
-          left_join(target_dist, by = setNames("value", var)) %>%
-          mutate(
-            factor = ifelse(!is.na(proportion.y), 
-                            proportion.y / proportion.x, 
-                            1)
-          )
-        
-        # Stocker les facteurs pour analyse
-        weight_factors_list[[var]] <- weight_factors
-        
-        # Appliquer les facteurs de pondération
-        result <- result %>%
-          left_join(
-            weight_factors %>% 
-              select(!!sym(var), factor), 
-            by = setNames(var, var)
-          ) %>%
-          mutate(
-            weight = weight * ifelse(!is.na(factor), factor, 1),
-            factor = NULL
-          )
-        
-        # Stocker les statistiques
-        before_stats[[var]] <- current_dist
-        
-        # Statistiques après pondération
-        after_dist <- result %>%
-          group_by(!!sym(var)) %>%
-          summarise(
-            weighted_count = sum(weight), 
-            .groups = "drop"
-          ) %>%
-          mutate(proportion = weighted_count / sum(weighted_count))
-        
-        after_stats[[var]] <- after_dist
-      }
-      
-      # Normaliser les poids
-      result <- result %>% 
-        mutate(weight = weight * (nrow(data) / sum(weight)))
-      
-      # Restaurer les types de colonnes originaux
-      for (col in names(data)) {
-        if (col %in% names(result) && !col %in% vars_to_weight) {
-          result[[col]] <- data[[col]]
-        }
-      }
-      
-      # Calculer le design effect et la taille effective de l'échantillon
-      design_effect <- 1 + (var(result$weight) / mean(result$weight)^2)
-      effective_sample_size <- nrow(result) / design_effect
-      
-      list(
-        weighted_data = result,
-        before_stats = before_stats,
-        after_stats = after_stats,
-        weight_factors = weight_factors_list,
-        design_effect = design_effect,
-        effective_sample_size = effective_sample_size
-      )
+  # Fonction de pondération - AVEC LIMITE DE POIDS À 5
+perform_weighting <- function(data, weights_prepared, vars_to_weight) {
+  # Convertir les colonnes de données en caractères
+  data_converted <- data %>%
+    mutate(across(all_of(vars_to_weight), as.character))
+  
+  # Initialiser avec des poids unitaires
+  result <- data_converted %>% mutate(weight = 1.0)
+  
+  # Stocker les statistiques
+  before_stats <- list()
+  after_stats <- list()
+  weight_factors_list <- list()
+  
+  # Pondérer par chaque variable sélectionnée
+  for (var in vars_to_weight) {
+    # Vérifier les valeurs manquantes
+    missing_count <- sum(is.na(result[[var]]))
+    if (missing_count > 0) {
+      warning(paste0("Variable '", var, "' contient ", missing_count, " valeurs manquantes"))
     }
+    
+    # Distribution actuelle
+    current_dist <- result %>% 
+      group_by(!!sym(var)) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      mutate(proportion = count / sum(count))
+    
+    # Distribution cible
+    target_dist <- weights_prepared %>%
+      filter(variable == var) %>%
+      select(value, proportion)
+    
+    # Calculer les facteurs de pondération
+    weight_factors <- current_dist %>%
+      left_join(target_dist, by = setNames("value", var)) %>%
+      mutate(
+        factor = ifelse(!is.na(proportion.y), 
+                        proportion.y / proportion.x, 
+                        1)
+      )
+    
+    # Stocker les facteurs pour analyse
+    weight_factors_list[[var]] <- weight_factors
+    
+    # Appliquer les facteurs de pondération
+    result <- result %>%
+      left_join(
+        weight_factors %>% 
+          select(!!sym(var), factor), 
+        by = setNames(var, var)
+      ) %>%
+      mutate(
+        weight = weight * ifelse(!is.na(factor), factor, 1),
+        factor = NULL
+      )
+    
+    # Stocker les statistiques
+    before_stats[[var]] <- current_dist
+    
+    # Statistiques après pondération
+    after_dist <- result %>%
+      group_by(!!sym(var)) %>%
+      summarise(
+        weighted_count = sum(weight), 
+        .groups = "drop"
+      ) %>%
+      mutate(proportion = weighted_count / sum(weighted_count))
+    
+    after_stats[[var]] <- after_dist
+  }
+  
+  # NOUVEAU: Limiter les poids à un maximum de 5
+  result <- result %>% 
+    mutate(weight = pmin(weight, 5))
+  
+  # Normaliser les poids après avoir appliqué la limite
+  result <- result %>% 
+    mutate(weight = weight * (nrow(data) / sum(weight)))
+  
+  # Restaurer les types de colonnes originaux
+  for (col in names(data)) {
+    if (col %in% names(result) && !col %in% vars_to_weight) {
+      result[[col]] <- data[[col]]
+    }
+  }
+  
+  # Calculer le design effect et la taille effective de l'échantillon
+  design_effect <- 1 + (var(result$weight) / mean(result$weight)^2)
+  effective_sample_size <- nrow(result) / design_effect
+  
+  list(
+    weighted_data = result,
+    before_stats = before_stats,
+    after_stats = after_stats,
+    weight_factors = weight_factors_list,
+    design_effect = design_effect,
+    effective_sample_size = effective_sample_size
+  )
+}
     
     # Pondération des données
     observeEvent(input$process_data, {
